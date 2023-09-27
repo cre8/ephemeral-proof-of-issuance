@@ -3,11 +3,11 @@
 import { randomUUID } from 'crypto';
 import { existsSync, mkdirSync, readFileSync, stat, writeFileSync } from 'fs';
 import { SignJWT, exportJWK, generateKeyPair } from 'jose';
-import { DynamicSLBloomFilter2023 } from '../src/dynamic-sl-bloom-filter-2023';
-import { DynamicSLBloomFilter2023Config } from '../src/dto/dynamic-sl-bloom-filter-2023-config';
-import { createSecret, signVc } from '../src/util';
-import { BloomFilterVerifier } from '../src/bloom-filter-verifier';
-import { createCredentialStatusToken } from '../src/holder';
+import { DynamicSLBloomFilter2023 } from '../dynamic-sl-bloom-filter-2023';
+import { DynamicSLBloomFilter2023Config } from '../dto/dynamic-sl-bloom-filter-2023-config';
+import { createSecret, signVc } from '../util';
+import { BloomFilterVerifier } from '../bloom-filter-verifier';
+import { createCredentialStatusToken } from '../holder';
 
 // paths where the key pair is stored
 const privateKeyPath = 'tmp/jwk.private.json';
