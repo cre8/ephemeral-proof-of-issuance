@@ -8,7 +8,7 @@
     "watch": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/main.ts",
     "start": "node dist/index.js",
     "lint": "eslint --ext .ts src",
-    "test": "jest"
+    "test": "jest --coverage --watch"
   },
   "author": "Mirko Mollik <mirko.mollik@fit.fraunhofer.de",
   "license": "Apache 2.0",
