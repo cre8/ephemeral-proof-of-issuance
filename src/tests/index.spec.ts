@@ -1,11 +1,10 @@
-// __tests__/utils.test.ts
-
 import { randomUUID } from 'crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { exportJWK, generateKeyPair } from 'jose';
 import { DynamicSLBloomFilter2023 } from '../dynamic-sl-bloom-filter-2023';
+import { VcStatus } from '../dto/vc-status';
 import { DynamicSLBloomFilter2023Config } from '../dto/dynamic-sl-bloom-filter-2023-config';
-import { createSecret, hmac } from '../util';
+import { createSecret, hash, hmac } from '../util';
 import { BloomFilterVerifier } from '../bloom-filter-verifier';
 import { createCredentialStatusToken } from '../holder';
 import {
@@ -41,10 +40,6 @@ async function init() {
     writeFileSync(privateKeyPath, JSON.stringify(await exportJWK(privateKey)));
     writeFileSync(publicKeyPath, JSON.stringify(await exportJWK(publicKey)));
   }
-}
-
-function getPrivateKey() {
-  return JSON.parse(readFileSync(privateKeyPath, 'utf-8'));
 }
 
 describe('bloom list 2023', () => {
@@ -126,7 +121,7 @@ describe('bloom list 2023', () => {
     );
   });
 
-  it('revoce a value in the list', async () => {
+  it('revoke a value in the list', async () => {
     const config: DynamicSLBloomFilter2023Config = {
       dynamicSLBloomFilter2023Schema,
       id: randomUUID(),
@@ -168,4 +163,62 @@ describe('bloom list 2023', () => {
     };
     expect(await verifier.isValid(vc)).toBe(false);
   });
+
+  it('load a list from the storage', async () => {
+    const config: DynamicSLBloomFilter2023Config = {
+      dynamicSLBloomFilter2023Schema,
+      id: randomUUID(),
+      issuer,
+      epoch: DEFAULT_EPOCH,
+      falsePositive: DEFAULT_FALSE_POSITIVE,
+      nbHashes: DEFAULT_NBHASHES,
+      purpose: 'revocation',
+      size: 100,
+    };
+    const entries: VcStatus[] = [];
+    for (let i = 0; i < config.size!; i++) {
+      entries.push({
+        s_id: randomUUID(),
+        secret: createSecret(),
+        valid: false,
+      });
+    }
+    const statuslist = await DynamicSLBloomFilter2023.addByWorker(
+      config,
+      entries,
+      1
+    );
+
+    const duration = Math.floor(Date.now() / 1000 / DEFAULT_EPOCH);
+    const token = await hmac(duration.toString(), entries[0].secret);
+    const validHash = await hash([token, entries[0].s_id]);
+    const invalidHash = await hash([validHash]);
+
+    expect(statuslist.bloomFilter.has(validHash)).toBe(entries[0].valid);
+    expect(statuslist.bloomFilter.has(invalidHash)).toBe(!entries[0].valid);
+  }, 30000);
+
+  it('load with different amount of workers', async () => {
+    const config: DynamicSLBloomFilter2023Config = {
+      dynamicSLBloomFilter2023Schema,
+      id: randomUUID(),
+      issuer,
+      epoch: DEFAULT_EPOCH,
+      falsePositive: DEFAULT_FALSE_POSITIVE,
+      nbHashes: DEFAULT_NBHASHES,
+      purpose: 'revocation',
+      size: 100000,
+    };
+    const entries: VcStatus[] = [];
+    for (let i = 0; i < config.size!; i++) {
+      entries.push({
+        s_id: randomUUID(),
+        secret: createSecret(),
+        valid: false,
+      });
+    }
+    for (let workCounter = 1; workCounter < 10; workCounter++) {
+      await DynamicSLBloomFilter2023.addByWorker(config, entries, workCounter);
+    }
+  }, 100000);
 });

@@ -1,5 +1,6 @@
 import { BloomFilter } from 'bloom-filters';
 import { deflate } from 'pako';
+import { Worker } from 'worker_threads';
 import {
   DynamicSLBloomFilter2023VC,
   ListPurpose,
@@ -14,6 +15,8 @@ import {
   DEFAULT_NBHASHES,
   DEFAULT_SIZE,
 } from './const';
+import { WorkerData } from './dto/worker-data';
+import { VcStatus } from './dto/vc-status';
 
 export class DynamicSLBloomFilter2023 {
   // id of the status list
@@ -47,12 +50,80 @@ export class DynamicSLBloomFilter2023 {
     this.size = config.size ?? DEFAULT_SIZE;
     this.nbHashes = config.nbHashes ?? DEFAULT_NBHASHES;
     this.epoch = config.epoch ?? DEFAULT_EPOCH;
-
-    const bloomSize = Math.round(
-      -(this.size * Math.log(this.falsePositive)) / Math.log(2) ** 2
-    );
     this.duration = Math.floor(Date.now() / 1000 / this.epoch);
-    this.bloomFilter = new BloomFilter(bloomSize, this.nbHashes);
+    this.bloomFilter = BloomFilter.create(this.size, this.falsePositive);
+  }
+
+  public static async addByWorker(
+    config: DynamicSLBloomFilter2023Config,
+    entries: VcStatus[],
+    worker = 10
+  ) {
+    const filter = new DynamicSLBloomFilter2023(config);
+    // separate the entries into chunks defined by worker
+    const chunkedEntries = DynamicSLBloomFilter2023.createChunks(
+      entries,
+      worker
+    );
+    try {
+      const start = new Date();
+      const workers = chunkedEntries.map((chunk) => filter.createWorker(chunk));
+      const results = await Promise.all(workers);
+      const hashCreated = new Date();
+      results.forEach((hashes) => {
+        hashes.forEach((hash) => filter.bloomFilter.add(hash));
+      });
+      const filterCreated = new Date();
+      console.log({
+        workerCount: worker,
+        hashCreation: hashCreated.getTime() - start.getTime(),
+        filterCreation: filterCreated.getTime() - hashCreated.getTime(),
+      });
+      return filter;
+    } catch (error) {
+      console.log(error);
+      throw new Error('Error adding entries to the filter');
+    }
+  }
+
+  /**
+   * Creates chunks of the array by the number of chunks
+   * @param array
+   * @param chunkCounter
+   * @returns array of chunks
+   */
+  private static createChunks(array: VcStatus[], chunkCounter: number) {
+    const chunkSize = Math.max(Math.ceil(array.length / chunkCounter), 1);
+    const chunks: VcStatus[][] = [];
+
+    for (let i = 0; i < chunkCounter; i++) {
+      const start = i * chunkSize;
+      chunks.push(array.slice(start, start + chunkSize));
+    }
+    return chunks;
+  }
+
+  /**
+   * Creates a worker that adds the hashes to the filter
+   * @param workerData
+   * @returns
+   */
+  private createWorker(elements: VcStatus[]): Promise<string[]> {
+    return new Promise((resolve, reject) => {
+      const worker = new Worker('./dist/worker.js');
+
+      worker.on('message', resolve);
+      worker.on('error', reject);
+      worker.on('exit', (code) => {
+        if (code !== 0)
+          reject(new Error(`Worker stopped with exit code ${code}`));
+      });
+      worker.postMessage({
+        duration: this.duration.toString(),
+        elements,
+        hashFunction: 'MurmurHash3',
+      } as WorkerData);
+    });
   }
 
   /**
@@ -64,7 +135,7 @@ export class DynamicSLBloomFilter2023 {
     // time based password
     const token = await hmac(this.duration.toString(), secret);
     // Status hash to declare validity
-    const validHash = await hash(token, s_id);
+    const validHash = await hash([token, s_id]);
     this.bloomFilter.add(validHash);
     return this.createStatusVc(secret, s_id);
   }
@@ -109,8 +180,8 @@ export class DynamicSLBloomFilter2023 {
     // time based password
     const token = await hmac(this.duration.toString(), secret);
     // Status hash to declare validity
-    const validHash = await hash(token, s_id);
-    const invalidHash = await hash(validHash);
+    const validHash = await hash([token, s_id]);
+    const invalidHash = await hash([validHash]);
     this.bloomFilter.add(invalidHash);
   }
 

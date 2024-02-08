@@ -37,8 +37,8 @@ export class BloomFilterVerifier {
     const nbHashes = config.nbHashes ?? DEFAULT_NBHASHES;
     const falsePositive = config.falsePositive ?? DEFAULT_FALSE_POSITIVE;
     this.timeCheck = config.timeCheck ?? false;
-    const bloomSize = Math.round(
-      -(size * Math.log(falsePositive)) / Math.log(2) ** 2
+    const bloomSize = Math.ceil(
+      -((size * Math.log(falsePositive)) / Math.pow(Math.log(2), 2))
     );
     this.bloomFilter = new BloomFilter(bloomSize, nbHashes);
     this.bloomFilter._filter.array = inflate(
@@ -57,11 +57,11 @@ export class BloomFilterVerifier {
     if (this.timeCheck && this.validUntil < Date.now())
       throw new Error('Bloom filter is no longer valid');
     // TODO validate the signature of the vc
-    const validHash = await hash(
+    const validHash = await hash([
       vc.credentialSubject.token,
-      vc.credentialSubject.id
-    );
-    const invalidHash = await hash(validHash);
+      vc.credentialSubject.id,
+    ]);
+    const invalidHash = await hash([validHash]);
     return (
       this.bloomFilter.has(validHash) && !this.bloomFilter.has(invalidHash)
     );

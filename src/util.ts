@@ -1,6 +1,12 @@
 import { JWK, SignJWT, importJWK } from 'jose';
 import { getRandomValues, subtle } from 'crypto';
 import { DynamicSLBloomFilter2023VC } from './dto/dynamic-sl-bloom-filter-2023';
+import murmurhash from 'murmurhash';
+
+/**
+ * Possible hash functions
+ */
+export type HashFunction = 'SHA-256' | 'MurmurHash3';
 
 /**
  * Creates a secret
@@ -12,13 +18,23 @@ export function createSecret() {
 
 /**
  * Hash a value where the SHA-256 algorithm is used. In case of multiple inputs, they are concatenated.
+ * @param inputs The inputs to hash
+ * @param usedFunction The hash function to use
  */
-export async function hash(...inputs: string[]): Promise<string> {
-  const res = await subtle.digest(
-    'SHA-256',
-    new TextEncoder().encode(inputs.join(''))
-  );
-  return base64Encode(res);
+export async function hash(
+  inputs: string[],
+  usedFunction: HashFunction = 'SHA-256'
+): Promise<string> {
+  switch (usedFunction) {
+    case 'MurmurHash3':
+      return Promise.resolve(murmurhash.v3(inputs.join('')).toString());
+    case 'SHA-256':
+      return subtle
+        .digest('SHA-256', new TextEncoder().encode(inputs.join('')))
+        .then((res) => base64Encode(res));
+    default:
+      throw Error(`Hash function ${usedFunction} not supported`);
+  }
 }
 
 /**
