@@ -8,6 +8,9 @@ import murmurhash from 'murmurhash';
  */
 export type HashFunctionName = 'SHA-256' | 'MurmurHash3';
 
+/**
+ * Possible HMAC functions
+ */
 export type HMACFunctionName = 'SHA-256';
 
 /**

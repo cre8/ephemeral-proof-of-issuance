@@ -2,6 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { exportJWK, generateKeyPair } from 'jose';
 import { signVc } from '../util.js';
 import { DynamicSLBloomFilterVC } from '../dto/dynamic-sl-bloom-filter.js';
+import {
+  DEFAULT_FALSE_POSITIVE,
+  DEFAULT_HASH_FUNCTION,
+  DEFAULT_SIZE,
+} from '../const.js';
 
 describe('util', () => {
   it('sign a vc', async () => {
@@ -26,7 +31,9 @@ describe('util', () => {
         id: '',
         purpose: 'revocation',
         content: '',
-        hashFunction: 'SHA-256',
+        hashFunction: DEFAULT_HASH_FUNCTION,
+        falsePositive: DEFAULT_FALSE_POSITIVE,
+        size: DEFAULT_SIZE,
       },
       credentialSchema: {
         id: '',

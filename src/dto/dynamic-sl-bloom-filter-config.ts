@@ -14,12 +14,10 @@ export interface DynamicSLBloomFilterConfig {
   falsePositive?: number;
   // size of the list
   size?: number;
-  // number of hash functions used
-  nbHashes?: number;
   // period in seconds a status list is valid
   epoch?: number;
   // hash function used
-  hashFunction: HashFunctionName;
+  hashFunction?: HashFunctionName;
   // hmac function used
-  hmacFunction: HMACFunctionName;
+  hmacFunction?: HMACFunctionName;
 }

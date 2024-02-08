@@ -19,8 +19,7 @@ import {
   DEFAULT_EPOCH,
   DEFAULT_FALSE_POSITIVE,
   DEFAULT_HASH_FUNCTION,
-  DEFAULT_HMAC_FUNCTION,
-  DEFAULT_NBHASHES,
+  DEFAULT_HMAC_FUNCTION,  
   DEFAULT_SIZE,
 } from './const.js';
 import { WorkerData } from './dto/worker-data.js';
@@ -39,19 +38,17 @@ export class DynamicSLBloomFilter {
   falsePositive: number;
   // size of the list
   size: number;
-  // number of hash functions used
-  nbHashes: number;
   // period in seconds a status list is valid
   epoch: number;
 
   // bloom filter used to store the values
-  public bloomFilter: BloomFilter.BloomFilter;
+  bloomFilter: BloomFilter.BloomFilter;
   // Count of the number of durations, where duration is chosen by use case, and t-now is a unix epoch value representing the current time.
   private duration: number;
   // hash function used
-  private hmacFunction!: HMACFunctionName;
+  hmacFunction!: HMACFunctionName;
   // hmac function used
-  private hashFunctions!: HashFunctionName[];
+  hashFunctions!: HashFunctionName[];
 
   constructor(config: DynamicSLBloomFilterConfig) {
     this.id = config.id;
@@ -60,17 +57,26 @@ export class DynamicSLBloomFilter {
     this.purpose = config.purpose ?? 'revocation';
     this.falsePositive = config.falsePositive ?? DEFAULT_FALSE_POSITIVE;
     this.size = config.size ?? DEFAULT_SIZE;
-    this.nbHashes = config.nbHashes ?? DEFAULT_NBHASHES;
     this.epoch = config.epoch ?? DEFAULT_EPOCH;
     this.duration = Math.floor(Date.now() / 1000 / this.epoch);
     this.hmacFunction = config.hmacFunction ?? DEFAULT_HMAC_FUNCTION;
-    this.hashFunctions = [config.hashFunction] ?? [DEFAULT_HASH_FUNCTION];
+    this.hashFunctions = config.hashFunction
+      ? [config.hashFunction]
+      : [DEFAULT_HASH_FUNCTION];
+    //TODO: the bloomfilter can be created by either size and falsepositive, or by bit size and hash functions
     this.bloomFilter = BloomFilter.BloomFilter.create(
       this.size,
       this.falsePositive
     );
   }
 
+  /**
+   * Adds the entries to the filter by using workers
+   * @param config Config for the bloom filter
+   * @param entries Entries that should be added to the filter
+   * @param worker amount of workers that should be used
+   * @returns an instance of the bloom filter
+   */
   public static async addByWorker(
     config: DynamicSLBloomFilterConfig,
     entries: VcStatus[],
@@ -80,19 +86,20 @@ export class DynamicSLBloomFilter {
     // separate the entries into chunks defined by worker
     const chunkedEntries = DynamicSLBloomFilter.createChunks(entries, worker);
     try {
-      const start = new Date();
+      //TODO: only measure the time in devlopment mode, no real useage for production
+      // const start = new Date();
       const workers = chunkedEntries.map((chunk) => filter.createWorker(chunk));
       const results = await Promise.all(workers);
-      const hashCreated = new Date();
+      // const hashCreated = new Date();
       results.forEach((hashes) => {
         hashes.forEach((hash) => filter.bloomFilter.add(hash));
       });
-      const filterCreated = new Date();
-      console.log({
-        workerCount: worker,
-        hashCreation: hashCreated.getTime() - start.getTime(),
-        filterCreation: filterCreated.getTime() - hashCreated.getTime(),
-      });
+      // const filterCreated = new Date();
+      // console.log({
+      //   workerCount: worker,
+      //   hashCreation: hashCreated.getTime() - start.getTime(),
+      //   filterCreation: filterCreated.getTime() - hashCreated.getTime(),
+      // });
       return filter;
     } catch (error) {
       console.log(error);
@@ -102,8 +109,8 @@ export class DynamicSLBloomFilter {
 
   /**
    * Creates chunks of the array by the number of chunks
-   * @param array
-   * @param chunkCounter
+   * @param array Array that should be chunked
+   * @param chunkCounter Number of chunks, equal to the number of workers
    * @returns array of chunks
    */
   private static createChunks(array: VcStatus[], chunkCounter: number) {
@@ -119,8 +126,8 @@ export class DynamicSLBloomFilter {
 
   /**
    * Creates a worker that adds the hashes to the filter
-   * @param workerData
-   * @returns
+   * @param workerData Data for the worker
+   * @returns an array of hashes
    */
   private createWorker(elements: VcStatus[]): Promise<string[]> {
     return new Promise((resolve, reject) => {
@@ -144,8 +151,8 @@ export class DynamicSLBloomFilter {
 
   /**
    * Adds an entry to the list. Returns an unsigned vc that includes the token
-   * @param s_id
-   * @param secret
+   * @param s_id The id of the entry
+   * @param secret The secret of the entry
    */
   async addValid(s_id: string, secret: string) {
     // time based password
@@ -162,7 +169,9 @@ export class DynamicSLBloomFilter {
 
   /**
    * Creates a vc that includes the token
-   * @param secret
+   * @param secret The secret of the entry
+   * @param s_id The id of the the vc
+   * @returns unsigned w3c vc data model
    */
   private createStatusVc(
     secret: string,
@@ -194,8 +203,8 @@ export class DynamicSLBloomFilter {
 
   /**
    * Adds the invalid hash to the list
-   * @param s_id
-   * @param secret
+   * @param s_id id of the vc
+   * @param secret secret of the vc
    */
   async addInvalid(s_id: string, secret: string) {
     // time based password
@@ -211,8 +220,8 @@ export class DynamicSLBloomFilter {
   }
 
   /**
-   * Creates an unsigned VC that includes the filter
-   * @returns
+   * Creates an unsigned VC that includes the filter.
+   * @returns unsigned w3c vc data model
    */
   createVc(): DynamicSLBloomFilterVC {
     // gzip and base64 encode the filter
@@ -236,11 +245,12 @@ export class DynamicSLBloomFilter {
       validFrom: issuanceDate.toISOString(),
       validUntil: expirationDate.toISOString(),
       credentialSubject: {
-        // not clear why we need the fragment here. Can maybe be removed
-        id: `${this.id}#list`,
+        id: this.id,
         purpose: this.purpose,
         content: filter,
         hashFunction: this.hashFunctions,
+        falsePositive: this.falsePositive,
+        size: this.size,
       },
       credentialSchema: {
         id: this.dynamicSLBloomFilterSchema,

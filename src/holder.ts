@@ -3,6 +3,12 @@ import { type CredentialStatusToken } from './dto/credential-status-token.js';
 import { hmac } from './util.js';
 import { type CredentialStatusSecretVc } from './dto/credential-status-secret.js';
 
+/**
+ * Create a credential status token
+ * @param credentialStatusSecretVc VC issued by the issuer and included all relevant information
+ * @param issuer issuer of the token
+ * @returns unsigned w3c vc data model
+ */
 export async function createCredentialStatusToken(
   credentialStatusSecretVc: CredentialStatusSecretVc,
   issuer: string

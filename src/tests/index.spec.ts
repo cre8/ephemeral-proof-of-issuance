@@ -34,11 +34,8 @@ describe('bloom list', () => {
       issuer,
       epoch: DEFAULT_EPOCH,
       falsePositive: DEFAULT_FALSE_POSITIVE,
-      nbHashes: DEFAULT_NBHASHES,
       purpose: 'revocation',
       size: DEFAULT_SIZE,
-      hashFunction: 'SHA-256',
-      hmacFunction: 'SHA-256',
     };
     const statuslist = new DynamicSLBloomFilter(config);
     expect(statuslist).toBeDefined();
@@ -49,8 +46,6 @@ describe('bloom list', () => {
       dynamicSLBloomFilterSchema,
       id: randomUUID(),
       issuer,
-      hashFunction: 'SHA-256',
-      hmacFunction: 'SHA-256',
     };
     const statuslist = new DynamicSLBloomFilter(config);
     const id = randomUUID();
@@ -93,9 +88,6 @@ describe('bloom list', () => {
     const verifier = new BloomFilterVerifier({
       vc: dynamicSLBloomFilterVC,
       timeCheck: true,
-      size: DEFAULT_SIZE,
-      falsePositive: DEFAULT_FALSE_POSITIVE,
-      nbHashes: DEFAULT_NBHASHES,
     });
     // create the token
     const holderDid = 'did:web:holder.example.com';
@@ -113,8 +105,6 @@ describe('bloom list', () => {
       dynamicSLBloomFilterSchema,
       id: randomUUID(),
       issuer,
-      hashFunction: 'SHA-256',
-      hmacFunction: 'SHA-256',
     };
     const statuslist = new DynamicSLBloomFilter(config);
     const id = randomUUID();
@@ -126,7 +116,11 @@ describe('bloom list', () => {
       vc: dynamicSLBloomFilterVC,
     });
     const duration = Math.floor(Date.now() / 1000 / DEFAULT_EPOCH);
-    const token = await hmac(duration.toString(), secret, config.hmacFunction);
+    const token = await hmac(
+      duration.toString(),
+      secret,
+      statuslist.hmacFunction
+    );
     // create a dummy vc because the valid function requires one
     const vc: CredentialStatusToken = {
       '@context': ['https://www.w3.org/2018/credentials/v1'],
@@ -160,7 +154,6 @@ describe('bloom list', () => {
       issuer,
       epoch: DEFAULT_EPOCH,
       falsePositive: DEFAULT_FALSE_POSITIVE,
-      nbHashes: DEFAULT_NBHASHES,
       purpose: 'revocation',
       size: 100,
       hashFunction: 'SHA-256',
@@ -184,10 +177,13 @@ describe('bloom list', () => {
     const token = await hmac(
       duration.toString(),
       entries[0].secret,
-      config.hmacFunction
+      statuslist.hmacFunction
     );
-    const validHash = await hash([token, entries[0].s_id], config.hashFunction);
-    const invalidHash = await hash([validHash], config.hashFunction);
+    const validHash = await hash(
+      [token, entries[0].s_id],
+      statuslist.hashFunctions[0]
+    );
+    const invalidHash = await hash([validHash], statuslist.hashFunctions[0]);
 
     expect(statuslist.bloomFilter.has(validHash)).toBe(entries[0].valid);
     expect(statuslist.bloomFilter.has(invalidHash)).toBe(!entries[0].valid);

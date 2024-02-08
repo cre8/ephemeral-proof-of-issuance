@@ -1,21 +1,8 @@
 import BloomFilter from 'bloom-filters';
 import { inflate } from 'pako';
-import { DynamicSLBloomFilterVC } from './dto/dynamic-sl-bloom-filter.js';
 import { hash, base64Decode, HashFunctionName } from './util.js';
-import {
-  DEFAULT_FALSE_POSITIVE,
-  DEFAULT_NBHASHES,
-  DEFAULT_SIZE,
-} from './const.js';
 import { CredentialStatusToken } from './dto/credential-status-token.js';
-
-export interface BloomFilterVerifierConfig {
-  size?: number;
-  falsePositive?: number;
-  nbHashes?: number;
-  timeCheck?: boolean;
-  vc: DynamicSLBloomFilterVC;
-}
+import { BloomFilterVerifierConfig } from './dto/bloom-filter-verifier-config.js';
 
 /**
  * Verifier that can be used to verify bloomfilter
@@ -34,14 +21,10 @@ export class BloomFilterVerifier {
    * @param config
    */
   constructor(config: BloomFilterVerifierConfig) {
-    const size = config.size ?? DEFAULT_SIZE;
-    const nbHashes = config.nbHashes ?? DEFAULT_NBHASHES;
-    const falsePositive = config.falsePositive ?? DEFAULT_FALSE_POSITIVE;
+    const size = config.vc.credentialSubject.size;
+    const falsePositive = config.vc.credentialSubject.falsePositive;
     this.timeCheck = config.timeCheck ?? false;
-    const bloomSize = Math.ceil(
-      -((size * Math.log(falsePositive)) / Math.pow(Math.log(2), 2))
-    );
-    this.bloomFilter = new BloomFilter.BloomFilter(bloomSize, nbHashes);
+    this.bloomFilter = BloomFilter.BloomFilter.create(size, falsePositive);
     this.bloomFilter._filter.array = inflate(
       base64Decode(config.vc.credentialSubject.content)
     );

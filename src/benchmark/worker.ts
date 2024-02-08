@@ -3,11 +3,13 @@ import {
   DEFAULT_EPOCH,
   DEFAULT_FALSE_POSITIVE,
   DEFAULT_NBHASHES,
-} from '../src/const.js';
-import { DynamicSLBloomFilterConfig } from '../src/dto/dynamic-sl-bloom-filter-config.js';
-import { VcStatus } from '../src/dto/vc-status.js';
-import { DynamicSLBloomFilter } from '../src/dynamic-sl-bloom-filter.js';
-import { createSecret } from '../src/util.js';
+} from '../const.js';
+import { DynamicSLBloomFilterConfig } from '../dto/dynamic-sl-bloom-filter-config.js';
+import { VcStatus } from '../dto/vc-status.js';
+import { DynamicSLBloomFilter } from '../dynamic-sl-bloom-filter.js';
+import { createSecret } from '../util.js';
+
+//TODO: move this out of the src folder since this should not be included in the build
 
 // path where the schema is located. Required for the vc-issuer to validate the vc
 const dynamicSLBloomFilterSchema = 'pathToTheSchema';
@@ -20,8 +22,7 @@ async function runWorkerScale() {
     id: randomUUID(),
     issuer,
     epoch: DEFAULT_EPOCH,
-    falsePositive: DEFAULT_FALSE_POSITIVE,
-    nbHashes: DEFAULT_NBHASHES,
+    falsePositive: DEFAULT_FALSE_POSITIVE,    
     purpose: 'revocation',
     size: 100000,
     hashFunction: 'SHA-256',

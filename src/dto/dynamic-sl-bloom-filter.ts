@@ -26,5 +26,9 @@ export interface DynamicSLBloomFilterVC extends VC {
     content: string;
     // Hashing function. SHA-256 MUST be used. Multiple inputs are simply concatenated.
     hashFunction: HashFunctionName | HashFunctionName[];
+    // how many elements should be included into the filter
+    size: number;
+    // what is the false positive rate for the filter
+    falsePositive: number;
   };
 }
