@@ -1,20 +1,20 @@
-import { BloomFilter } from 'bloom-filters';
+import BloomFilter from 'bloom-filters';
 import { inflate } from 'pako';
-import { DynamicSLBloomFilter2023VC } from './dto/dynamic-sl-bloom-filter-2023';
-import { hash, base64Decode } from './util';
+import { DynamicSLBloomFilterVC } from './dto/dynamic-sl-bloom-filter.js';
+import { hash, base64Decode, HashFunctionName } from './util.js';
 import {
   DEFAULT_FALSE_POSITIVE,
   DEFAULT_NBHASHES,
   DEFAULT_SIZE,
-} from './const';
-import { CredentialStatusToken } from './dto/credential-status-token';
+} from './const.js';
+import { CredentialStatusToken } from './dto/credential-status-token.js';
 
 export interface BloomFilterVerifierConfig {
   size?: number;
   falsePositive?: number;
   nbHashes?: number;
   timeCheck?: boolean;
-  vc: DynamicSLBloomFilter2023VC;
+  vc: DynamicSLBloomFilterVC;
 }
 
 /**
@@ -22,11 +22,12 @@ export interface BloomFilterVerifierConfig {
  */
 export class BloomFilterVerifier {
   // bloom filter used to store the values
-  public bloomFilter: BloomFilter;
+  public bloomFilter: BloomFilter.BloomFilter;
 
   // time when the bloom filter is no longer valid
   private validUntil: number;
   timeCheck: boolean;
+  hashFunctions: HashFunctionName[];
 
   /**
    * Iinit the verifier
@@ -40,12 +41,17 @@ export class BloomFilterVerifier {
     const bloomSize = Math.ceil(
       -((size * Math.log(falsePositive)) / Math.pow(Math.log(2), 2))
     );
-    this.bloomFilter = new BloomFilter(bloomSize, nbHashes);
+    this.bloomFilter = new BloomFilter.BloomFilter(bloomSize, nbHashes);
     this.bloomFilter._filter.array = inflate(
       base64Decode(config.vc.credentialSubject.content)
     );
     // we are looking on the validUntil field of the status list credential, not the one we get from the holder.
     this.validUntil = new Date(config.vc.validUntil).getTime();
+    if (Array.isArray(config.vc.credentialSubject.hashFunction)) {
+      this.hashFunctions = config.vc.credentialSubject.hashFunction;
+    } else {
+      this.hashFunctions = [config.vc.credentialSubject.hashFunction];
+    }
   }
 
   /**
@@ -57,11 +63,11 @@ export class BloomFilterVerifier {
     if (this.timeCheck && this.validUntil < Date.now())
       throw new Error('Bloom filter is no longer valid');
     // TODO validate the signature of the vc
-    const validHash = await hash([
-      vc.credentialSubject.token,
-      vc.credentialSubject.id,
-    ]);
-    const invalidHash = await hash([validHash]);
+    const validHash = await hash(
+      [vc.credentialSubject.token, vc.credentialSubject.id],
+      this.hashFunctions[0]
+    );
+    const invalidHash = await hash([validHash], this.hashFunctions[0]);
     return (
       this.bloomFilter.has(validHash) && !this.bloomFilter.has(invalidHash)
     );

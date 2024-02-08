@@ -1,4 +1,4 @@
-import { VC } from './vc';
+import { VC } from './vc.js';
 
 /**
  * Defines the credential that is issued be the holder and parsed to the verifier.

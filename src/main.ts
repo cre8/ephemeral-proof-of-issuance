@@ -1,3 +1,3 @@
-export * from './dynamic-sl-bloom-filter-2023';
-export * from './bloom-filter-verifier';
-export * from './holder';
+export * from './dynamic-sl-bloom-filter.js';
+export * from './bloom-filter-verifier.js';
+export * from './holder.js';

@@ -7,11 +7,15 @@ if (parentPort) {
     Promise.all(
       data.elements.map(async (element) => {
         // time based password
-        const token = await hmac(data.duration, element.secret);
+        const token = await hmac(
+          data.duration,
+          element.secret,
+          data.hmacFunction
+        );
         // Status hash to declare validity
-        const validHash = await hash([token, element.s_id]);
+        const validHash = await hash([token, element.s_id], data.hashFunction);
         if (element.valid) return validHash;
-        return hash([validHash]);
+        return hash([validHash], data.hashFunction);
       })
     ).then((hashes) => parentPort!.postMessage(hashes));
   });

@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
-import { type CredentialStatusToken } from './dto/credential-status-token';
-import { hmac } from './util';
-import { type CredentialStatusSecretVc } from './dto/credential-status-secret';
+import { type CredentialStatusToken } from './dto/credential-status-token.js';
+import { hmac } from './util.js';
+import { type CredentialStatusSecretVc } from './dto/credential-status-secret.js';
 
 export async function createCredentialStatusToken(
   credentialStatusSecretVc: CredentialStatusSecretVc,
@@ -18,7 +18,8 @@ export async function createCredentialStatusToken(
   }
   const token = await hmac(
     credentialStatusSecretVc.credentialSubject.duration.toString(),
-    credentialStatusSecretVc.credentialSubject.secret
+    credentialStatusSecretVc.credentialSubject.secret,
+    credentialStatusSecretVc.credentialSubject.hmacFunction
   );
   return {
     '@context': ['https://www.w3.org/2018/credentials/v1'],

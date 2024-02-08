@@ -1,12 +1,14 @@
 import { JWK, SignJWT, importJWK } from 'jose';
 import { getRandomValues, subtle } from 'crypto';
-import { DynamicSLBloomFilter2023VC } from './dto/dynamic-sl-bloom-filter-2023';
+import { DynamicSLBloomFilterVC } from './dto/dynamic-sl-bloom-filter.js';
 import murmurhash from 'murmurhash';
 
 /**
  * Possible hash functions
  */
-export type HashFunction = 'SHA-256' | 'MurmurHash3';
+export type HashFunctionName = 'SHA-256' | 'MurmurHash3';
+
+export type HMACFunctionName = 'SHA-256';
 
 /**
  * Creates a secret
@@ -23,7 +25,7 @@ export function createSecret() {
  */
 export async function hash(
   inputs: string[],
-  usedFunction: HashFunction = 'SHA-256'
+  usedFunction: HashFunctionName
 ): Promise<string> {
   switch (usedFunction) {
     case 'MurmurHash3':
@@ -41,9 +43,13 @@ export async function hash(
  * Hash-based message authentication code function HMAC-SHA256 MUST be used. Use the subtle crypto API to compute the HMAC.
  * @returns The HMAC value as a hex string.
  */
-export async function hmac(value: string, secret: string): Promise<string> {
+export async function hmac(
+  value: string,
+  secret: string,
+  hmacAlgorithm: HMACFunctionName
+): Promise<string> {
   const enc = new TextEncoder();
-  const algorithm = { name: 'HMAC', hash: 'SHA-256' };
+  const algorithm = { name: 'HMAC', hash: hmacAlgorithm };
   return subtle
     .importKey('raw', enc.encode(secret), algorithm, false, ['sign', 'verify'])
     .then((key) =>
@@ -86,7 +92,7 @@ export function base64Decode(encoded: string): ArrayBuffer {
  */
 export async function signVc(
   jwk: JWK,
-  vc: DynamicSLBloomFilter2023VC,
+  vc: DynamicSLBloomFilterVC,
   alg: string
 ) {
   const key = await importJWK(jwk);

@@ -1,30 +1,38 @@
-import { BloomFilter } from 'bloom-filters';
+import BloomFilter from 'bloom-filters';
 import { deflate } from 'pako';
 import { Worker } from 'worker_threads';
 import {
-  DynamicSLBloomFilter2023VC,
+  DynamicSLBloomFilterVC,
   ListPurpose,
-} from './dto/dynamic-sl-bloom-filter-2023';
-import { hmac, hash, base64Encode } from './util';
-import { CredentialStatusSecretVc } from './dto/credential-status-secret';
+} from './dto/dynamic-sl-bloom-filter.js';
+import {
+  hmac,
+  hash,
+  base64Encode,
+  HMACFunctionName,
+  HashFunctionName,
+} from './util.js';
+import { CredentialStatusSecretVc } from './dto/credential-status-secret.js';
 import { randomUUID } from 'node:crypto';
-import { DynamicSLBloomFilter2023Config } from './dto/dynamic-sl-bloom-filter-2023-config';
+import { DynamicSLBloomFilterConfig } from './dto/dynamic-sl-bloom-filter-config.js';
 import {
   DEFAULT_EPOCH,
   DEFAULT_FALSE_POSITIVE,
+  DEFAULT_HASH_FUNCTION,
+  DEFAULT_HMAC_FUNCTION,
   DEFAULT_NBHASHES,
   DEFAULT_SIZE,
-} from './const';
-import { WorkerData } from './dto/worker-data';
-import { VcStatus } from './dto/vc-status';
+} from './const.js';
+import { WorkerData } from './dto/worker-data.js';
+import { VcStatus } from './dto/vc-status.js';
 
-export class DynamicSLBloomFilter2023 {
+export class DynamicSLBloomFilter {
   // id of the status list
   id: string;
   // issuer of the list
   issuer: string;
   // path where the schema is located. Required for the vc-issuer to validate the vc
-  dynamicSLBloomFilter2023Schema: string;
+  dynamicSLBloomFilterSchema: string;
   // purpose of the list
   purpose: ListPurpose;
   // posibliity of a false positive event
@@ -37,34 +45,40 @@ export class DynamicSLBloomFilter2023 {
   epoch: number;
 
   // bloom filter used to store the values
-  public bloomFilter: BloomFilter;
+  public bloomFilter: BloomFilter.BloomFilter;
   // Count of the number of durations, where duration is chosen by use case, and t-now is a unix epoch value representing the current time.
   private duration: number;
+  // hash function used
+  private hmacFunction!: HMACFunctionName;
+  // hmac function used
+  private hashFunctions!: HashFunctionName[];
 
-  constructor(config: DynamicSLBloomFilter2023Config) {
+  constructor(config: DynamicSLBloomFilterConfig) {
     this.id = config.id;
     this.issuer = config.issuer;
-    this.dynamicSLBloomFilter2023Schema = config.dynamicSLBloomFilter2023Schema;
+    this.dynamicSLBloomFilterSchema = config.dynamicSLBloomFilterSchema;
     this.purpose = config.purpose ?? 'revocation';
     this.falsePositive = config.falsePositive ?? DEFAULT_FALSE_POSITIVE;
     this.size = config.size ?? DEFAULT_SIZE;
     this.nbHashes = config.nbHashes ?? DEFAULT_NBHASHES;
     this.epoch = config.epoch ?? DEFAULT_EPOCH;
     this.duration = Math.floor(Date.now() / 1000 / this.epoch);
-    this.bloomFilter = BloomFilter.create(this.size, this.falsePositive);
+    this.hmacFunction = config.hmacFunction ?? DEFAULT_HMAC_FUNCTION;
+    this.hashFunctions = [config.hashFunction] ?? [DEFAULT_HASH_FUNCTION];
+    this.bloomFilter = BloomFilter.BloomFilter.create(
+      this.size,
+      this.falsePositive
+    );
   }
 
   public static async addByWorker(
-    config: DynamicSLBloomFilter2023Config,
+    config: DynamicSLBloomFilterConfig,
     entries: VcStatus[],
     worker = 10
   ) {
-    const filter = new DynamicSLBloomFilter2023(config);
+    const filter = new DynamicSLBloomFilter(config);
     // separate the entries into chunks defined by worker
-    const chunkedEntries = DynamicSLBloomFilter2023.createChunks(
-      entries,
-      worker
-    );
+    const chunkedEntries = DynamicSLBloomFilter.createChunks(entries, worker);
     try {
       const start = new Date();
       const workers = chunkedEntries.map((chunk) => filter.createWorker(chunk));
@@ -118,11 +132,13 @@ export class DynamicSLBloomFilter2023 {
         if (code !== 0)
           reject(new Error(`Worker stopped with exit code ${code}`));
       });
-      worker.postMessage({
+      const data: WorkerData = {
         duration: this.duration.toString(),
         elements,
-        hashFunction: 'MurmurHash3',
-      } as WorkerData);
+        hashFunction: this.hashFunctions[0],
+        hmacFunction: this.hmacFunction,
+      };
+      worker.postMessage(data);
     });
   }
 
@@ -133,9 +149,13 @@ export class DynamicSLBloomFilter2023 {
    */
   async addValid(s_id: string, secret: string) {
     // time based password
-    const token = await hmac(this.duration.toString(), secret);
+    const token = await hmac(
+      this.duration.toString(),
+      secret,
+      this.hmacFunction
+    );
     // Status hash to declare validity
-    const validHash = await hash([token, s_id]);
+    const validHash = await hash([token, s_id], this.hashFunctions[0]);
     this.bloomFilter.add(validHash);
     return this.createStatusVc(secret, s_id);
   }
@@ -159,6 +179,7 @@ export class DynamicSLBloomFilter2023 {
         duration: this.duration,
         secret,
         id: s_id,
+        hmacFunction: this.hmacFunction,
       },
       credentialSchema: {
         type: 'FullJsonSchemaValidator2021',
@@ -178,18 +199,22 @@ export class DynamicSLBloomFilter2023 {
    */
   async addInvalid(s_id: string, secret: string) {
     // time based password
-    const token = await hmac(this.duration.toString(), secret);
+    const token = await hmac(
+      this.duration.toString(),
+      secret,
+      this.hmacFunction
+    );
     // Status hash to declare validity
-    const validHash = await hash([token, s_id]);
-    const invalidHash = await hash([validHash]);
+    const validHash = await hash([token, s_id], this.hashFunctions[0]);
+    const invalidHash = await hash([validHash], this.hashFunctions[0]);
     this.bloomFilter.add(invalidHash);
   }
 
   /**
-   * Creates a JWT that includes the vc
+   * Creates an unsigned VC that includes the filter
    * @returns
    */
-  createVc(): DynamicSLBloomFilter2023VC {
+  createVc(): DynamicSLBloomFilterVC {
     // gzip and base64 encode the filter
     const filter = base64Encode(deflate(this.bloomFilter._filter.array));
     // create the vc
@@ -201,7 +226,7 @@ export class DynamicSLBloomFilter2023 {
       type: [
         'VerifiableCredential',
         'VerifiableAttestation',
-        'DynamicSLBloomFilter2023',
+        'DynamicSLBloomFilter',
       ],
       id: this.id,
       issuer: this.issuer,
@@ -215,9 +240,10 @@ export class DynamicSLBloomFilter2023 {
         id: `${this.id}#list`,
         purpose: this.purpose,
         content: filter,
+        hashFunction: this.hashFunctions,
       },
       credentialSchema: {
-        id: this.dynamicSLBloomFilter2023Schema,
+        id: this.dynamicSLBloomFilterSchema,
         type: 'FullJsonSchemaValidator2021',
       },
     };

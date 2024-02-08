@@ -1,18 +1,19 @@
+import { describe, it, expect } from 'vitest';
 import { exportJWK, generateKeyPair } from 'jose';
-import { signVc } from '../util';
-import { DynamicSLBloomFilter2023VC } from '../dto/dynamic-sl-bloom-filter-2023';
+import { signVc } from '../util.js';
+import { DynamicSLBloomFilterVC } from '../dto/dynamic-sl-bloom-filter.js';
 
 describe('util', () => {
   it('sign a vc', async () => {
     const alg = 'ES256';
     const { privateKey } = await generateKeyPair(alg);
     const date = '2023-09-28T09:14:17.555Z';
-    const vc: DynamicSLBloomFilter2023VC = {
+    const vc: DynamicSLBloomFilterVC = {
       '@context': ['https://www.w3.org/2018/credentials/v1'],
       type: [
         'VerifiableCredential',
         'VerifiableAttestation',
-        'DynamicSLBloomFilter2023',
+        'DynamicSLBloomFilter',
       ],
       id: '',
       issuer: '',
@@ -25,6 +26,7 @@ describe('util', () => {
         id: '',
         purpose: 'revocation',
         content: '',
+        hashFunction: 'SHA-256',
       },
       credentialSchema: {
         id: '',

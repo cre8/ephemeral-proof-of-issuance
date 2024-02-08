@@ -1,16 +1,17 @@
-import { VC } from './vc';
+import { HashFunctionName } from '../util.js';
+import { VC } from './vc.js';
 
 export type ListPurpose = 'revocation' | 'suspension';
 
 /**
  * Defines the credential that is holding the status list.
  */
-export interface DynamicSLBloomFilter2023VC extends VC {
-  // MUST contain "DynamicSLBloomFilter2023"
+export interface DynamicSLBloomFilterVC extends VC {
+  // MUST contain "DynamicSLBloomFilter"
   type: [
     'VerifiableCredential',
     'VerifiableAttestation',
-    'DynamicSLBloomFilter2023'
+    'DynamicSLBloomFilter'
   ];
   // https://www.w3.org/TR/vc-data-model/#expiration
   // @deprecated will be deprecated according to the next version of the VC data model
@@ -23,5 +24,7 @@ export interface DynamicSLBloomFilter2023VC extends VC {
     purpose: ListPurpose;
     // First, GZIP-compressed, then base64 encoded values of a Bloom Filter.
     content: string;
+    // Hashing function. SHA-256 MUST be used. Multiple inputs are simply concatenated.
+    hashFunction: HashFunctionName | HashFunctionName[];
   };
 }

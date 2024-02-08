@@ -1,5 +1,5 @@
-import { HashFunction } from '../util';
-import { VcStatus } from './vc-status';
+import { HMACFunctionName, HashFunctionName } from '../util.js';
+import { VcStatus } from './vc-status.js';
 
 export interface WorkerData {
   /**
@@ -15,5 +15,10 @@ export interface WorkerData {
   /**
    * Used hash function
    */
-  hashFunction: HashFunction;
+  hashFunction: HashFunctionName;
+
+  /**
+   * Used hmac function.
+   */
+  hmacFunction: HMACFunctionName;
 }
