@@ -1,24 +1,20 @@
-import { describe, it, beforeAll, expect } from 'vitest';
-import { randomUUID } from 'crypto';
-import { DynamicSLBloomFilter } from '../dynamic-sl-bloom-filter.js';
-import { VcStatus } from '../dto/vc-status.js';
-import { DynamicSLBloomFilterConfig } from '../dto/dynamic-sl-bloom-filter-config.js';
-import { createSecret, hash, hmac } from '../util.js';
-import { BloomFilterVerifier } from '../bloom-filter-verifier.js';
-import { createCredentialStatusToken } from '../holder.js';
+import { randomUUID } from 'node:crypto';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { BloomFilterVerifier } from '../verifier/bloom-filter-verifier.js';
 import {
-  DEFAULT_SIZE,
-  DEFAULT_FALSE_POSITIVE,
-  DEFAULT_NBHASHES,
   DEFAULT_EPOCH,
+  DEFAULT_FALSE_POSITIVE,
+  DEFAULT_SIZE,
 } from '../const.js';
-import { CredentialStatusToken } from '../dto/credential-status-token.js';
+import type { CredentialStatusToken } from '../dto/credential-status-token.js';
+import type { DynamicSLBloomFilterConfig } from '../dto/dynamic-sl-bloom-filter-config.js';
+import type { VcStatus } from '../dto/vc-status.js';
+import { DynamicSLBloomFilter } from '../container/dynamic-sl-bloom-filter.js';
+import { createCredentialStatusToken } from '../holder.js';
+import { createSecret, hash, hmac } from '../util.js';
 
 // issuer reference of the vc statuslist
-const issuer = 'did:web:exmaple.com';
-
-// path where the schema is located. Required for the vc-issuer to validate the vc
-const dynamicSLBloomFilterSchema = 'pathToTheSchema';
+const issuer = 'http://example.com';
 
 async function init() {}
 
@@ -29,21 +25,17 @@ describe('bloom list', () => {
 
   it('creates a list', () => {
     const config: DynamicSLBloomFilterConfig = {
-      dynamicSLBloomFilterSchema,
       id: randomUUID(),
       issuer,
       epoch: DEFAULT_EPOCH,
       falsePositive: DEFAULT_FALSE_POSITIVE,
-      purpose: 'revocation',
       size: DEFAULT_SIZE,
     };
     const statuslist = new DynamicSLBloomFilter(config);
     expect(statuslist).toBeDefined();
   });
-  //TODO: move this to a benchmark test, since this is not a unit test
   it('is a value in the list', async () => {
     const config: DynamicSLBloomFilterConfig = {
-      dynamicSLBloomFilterSchema,
       id: randomUUID(),
       issuer,
     };
@@ -51,26 +43,23 @@ describe('bloom list', () => {
     const id = randomUUID();
     const secret = createSecret();
     const credentialStatusVc = await statuslist.addValid(id, secret);
-    const dynamicSLBloomFilterVC = statuslist.createVc();
+    const dynamicSLBloomFilterVC = statuslist.createVcPayload();
 
     const verifier = new BloomFilterVerifier({
       vc: dynamicSLBloomFilterVC,
     });
-    // create the token
-    const holderDid = 'did:web:holder.example.com';
     const vcToken = await createCredentialStatusToken(
       credentialStatusVc,
-      holderDid
+      issuer
     );
     expect(await verifier.isValid(vcToken)).toBe(true);
 
-    vcToken.credentialSubject.token = 'invalidValue';
+    vcToken.token = 'invalidValue';
     expect(await verifier.isValid(vcToken)).toBe(false);
   });
 
   it('check with an expired vc', async () => {
     const config: DynamicSLBloomFilterConfig = {
-      dynamicSLBloomFilterSchema,
       id: randomUUID(),
       issuer,
       hashFunction: 'SHA-256',
@@ -80,20 +69,19 @@ describe('bloom list', () => {
     const id = randomUUID();
     const secret = createSecret();
     const credentialStatusVc = await statuslist.addValid(id, secret);
-    const dynamicSLBloomFilterVC = statuslist.createVc();
+    const dynamicSLBloomFilterVC = statuslist.createVcPayload();
 
     const expired = new Date();
     expired.setFullYear(expired.getFullYear() - 1);
-    dynamicSLBloomFilterVC.validUntil = expired.toISOString();
+    dynamicSLBloomFilterVC.exp = expired.getTime();
     const verifier = new BloomFilterVerifier({
       vc: dynamicSLBloomFilterVC,
       timeCheck: true,
     });
     // create the token
-    const holderDid = 'did:web:holder.example.com';
     const vcToken = await createCredentialStatusToken(
       credentialStatusVc,
-      holderDid
+      issuer
     );
     await expect(verifier.isValid(vcToken)).rejects.toThrow(
       'Bloom filter is no longer valid'
@@ -102,7 +90,6 @@ describe('bloom list', () => {
 
   it('revoke a value in the list', async () => {
     const config: DynamicSLBloomFilterConfig = {
-      dynamicSLBloomFilterSchema,
       id: randomUUID(),
       issuer,
     };
@@ -110,7 +97,7 @@ describe('bloom list', () => {
     const id = randomUUID();
     const secret = createSecret();
     await statuslist.addInvalid(id, secret);
-    const dynamicSLBloomFilterVC = statuslist.createVc();
+    const dynamicSLBloomFilterVC = statuslist.createVcPayload();
 
     const verifier = new BloomFilterVerifier({
       vc: dynamicSLBloomFilterVC,
@@ -123,69 +110,57 @@ describe('bloom list', () => {
     );
     // create a dummy vc because the valid function requires one
     const vc: CredentialStatusToken = {
-      '@context': ['https://www.w3.org/2018/credentials/v1'],
-      type: [
-        'VerifiableCredential',
-        'VerifiableAttestation',
-        'CredentialStatusToken',
-      ],
-      credentialSchema: {
-        id: '',
-        type: 'FullJsonSchemaValidator2021',
-      },
-      expirationDate: '',
-      credentialSubject: {
-        id,
-        token,
-      },
-      issuanceDate: '',
-      validUntil: '',
-      id: '',
-      issuer: '',
-      validFrom: '',
+      exp: 0,
+      iat: 0,
+      sub: id,
+      token,
+      iss: '',
     };
     expect(await verifier.isValid(vc)).toBe(false);
   });
 
   it('load a list from the storage', async () => {
     const config: DynamicSLBloomFilterConfig = {
-      dynamicSLBloomFilterSchema,
       id: randomUUID(),
       issuer,
       epoch: DEFAULT_EPOCH,
       falsePositive: DEFAULT_FALSE_POSITIVE,
-      purpose: 'revocation',
       size: 100,
       hashFunction: 'SHA-256',
       hmacFunction: 'SHA-256',
     };
     const entries: VcStatus[] = [];
-    for (let i = 0; i < config.size!; i++) {
+    for (let i = 0; i < (config.size as number); i++) {
       entries.push({
         s_id: randomUUID(),
         secret: createSecret(),
-        valid: false,
+        valid: i % 2 === 0,
       });
     }
-    const statuslist = await DynamicSLBloomFilter.addByWorker(
-      config,
-      entries,
-      1
-    );
+    const statuslist = new DynamicSLBloomFilter(config);
+    for (const entry of entries) {
+      entry.valid
+        ? statuslist.addValid(entry.s_id, entry.secret)
+        : statuslist.addInvalid(entry.s_id, entry.secret);
+    }
 
     const duration = Math.floor(Date.now() / 1000 / DEFAULT_EPOCH);
-    const token = await hmac(
-      duration.toString(),
-      entries[0].secret,
-      statuslist.hmacFunction
-    );
-    const validHash = await hash(
-      [token, entries[0].s_id],
-      statuslist.hashFunctions[0]
-    );
-    const invalidHash = await hash([validHash], statuslist.hashFunctions[0]);
 
-    expect(statuslist.bloomFilter.has(validHash)).toBe(entries[0].valid);
-    expect(statuslist.bloomFilter.has(invalidHash)).toBe(!entries[0].valid);
+    for (let i = 0; i < entries.length; i++) {
+      const token = await hmac(
+        duration.toString(),
+        entries[i].secret,
+        statuslist.hmacFunction
+      );
+
+      const validHash = await hash(
+        [token, entries[i].s_id],
+        statuslist.hashFunction
+      );
+      const invalidHash = await hash([validHash], statuslist.hashFunction);
+
+      expect(statuslist.bloomFilter.has(validHash)).toBe(entries[i].valid);
+      expect(statuslist.bloomFilter.has(invalidHash)).toBe(!entries[i].valid);
+    }
   }, 30000);
 });

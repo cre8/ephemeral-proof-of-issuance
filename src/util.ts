@@ -1,6 +1,10 @@
-import { JWK, SignJWT, importJWK } from 'jose';
-import { getRandomValues, subtle } from 'crypto';
-import { DynamicSLBloomFilterVC } from './dto/dynamic-sl-bloom-filter.js';
+import { getRandomValues, subtle } from 'node:crypto';
+import {
+  type JWTHeaderParameters,
+  type JWTPayload,
+  type KeyLike,
+  SignJWT,
+} from 'jose';
 import murmurhash from 'murmurhash';
 
 /**
@@ -28,7 +32,7 @@ export function createSecret() {
  */
 export async function hash(
   inputs: string[],
-  usedFunction: HashFunctionName
+  usedFunction: HashFunctionName,
 ): Promise<string> {
   switch (usedFunction) {
     case 'MurmurHash3':
@@ -49,7 +53,7 @@ export async function hash(
 export async function hmac(
   value: string,
   secret: string,
-  hmacAlgorithm: HMACFunctionName
+  hmacAlgorithm: HMACFunctionName,
 ): Promise<string> {
   const enc = new TextEncoder();
   const algorithm = { name: 'HMAC', hash: hmacAlgorithm };
@@ -58,7 +62,7 @@ export async function hmac(
     .then((key) =>
       subtle
         .sign(algorithm.name, key, enc.encode(value))
-        .then((signature) => base64Encode(signature))
+        .then((signature) => base64Encode(signature)),
     );
 }
 
@@ -70,9 +74,8 @@ export async function hmac(
 export function base64Encode(buffer: ArrayBuffer): string {
   if (typeof Buffer === 'undefined') {
     return window.btoa(String.fromCharCode(...new Uint8Array(buffer)));
-  } else {
-    return Buffer.from(buffer).toString('base64');
   }
+  return Buffer.from(buffer).toString('base64');
 }
 
 /**
@@ -81,30 +84,28 @@ export function base64Encode(buffer: ArrayBuffer): string {
 export function base64Decode(encoded: string): ArrayBuffer {
   if (typeof Buffer === 'undefined') {
     return Uint8Array.from(window.atob(encoded), (c) => c.charCodeAt(0));
-  } else {
-    return Buffer.from(encoded, 'base64');
   }
+  return Buffer.from(encoded, 'base64');
 }
 
 /**
  * Signs a vc with the given jwk.
  * @param jwk
- * @param vc
+ * @param payload
  * @param alg
  * @returns
  */
 export async function signVc(
-  jwk: JWK,
-  vc: DynamicSLBloomFilterVC,
-  alg: string
+  key: KeyLike,
+  payload: JWTPayload,
+  header: JWTHeaderParameters,
 ) {
-  const key = await importJWK(jwk);
-  // TODO check if all values are included https://www.w3.org/TR/vc-data-model/#jwt-decoding
-  return new SignJWT({ vc })
-    .setProtectedHeader({ alg })
-    .setIssuedAt(new Date(vc.issuanceDate).getTime())
-    .setExpirationTime(new Date(vc.expirationDate).getTime())
-    .setIssuer(vc.issuer)
-    .setSubject(vc.credentialSubject.id)
-    .sign(key);
+  const jwt = new SignJWT({ ...payload })
+    .setProtectedHeader(header)
+    .setIssuedAt(new Date(payload.iat as number).getTime() / 1000)
+    .setIssuer(payload.iss as string);
+  if (payload.jti) jwt.setJti(payload.jti);
+  if (payload.exp)
+    jwt.setExpirationTime(new Date(payload.exp).getTime() / 1000);
+  return jwt.sign(key);
 }

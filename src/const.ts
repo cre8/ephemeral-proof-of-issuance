@@ -1,4 +1,4 @@
-import { HMACFunctionName, HashFunctionName } from './util.js';
+import type { HMACFunctionName, HashFunctionName } from './util.js';
 
 // recommened value from ebsi
 export const DEFAULT_NBHASHES = 27;
