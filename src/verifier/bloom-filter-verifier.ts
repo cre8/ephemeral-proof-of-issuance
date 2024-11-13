@@ -4,7 +4,7 @@ import type { CredentialStatusToken } from '../dto/credential-status-token.js';
 import { base64Decode, hash } from '../util.js';
 import { Verifier } from './verifier.js';
 import { VerifierConfig } from '../dto/verifier-config.js';
-import { DynamicSLBloomFilterVC } from '../dto/dynamic-sl-bloom-filter.js';
+import { DynamicBloomFilterVC } from '../dto/dynamic-bloom-filter.js';
 
 /**
  * Verifier that can be used to verify bloomfilter
@@ -17,7 +17,7 @@ export class BloomFilterVerifier extends Verifier {
    * Iinit the verifier
    * @param config
    */
-  constructor(config: VerifierConfig<DynamicSLBloomFilterVC>) {
+  constructor(config: VerifierConfig<DynamicBloomFilterVC>) {
     super(config);
 
     const size = config.vc.size;

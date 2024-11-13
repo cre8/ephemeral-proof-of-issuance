@@ -63,13 +63,13 @@ describe('crl', () => {
     const id = randomUUID();
     const secret = createSecret();
     const credentialStatusVc = await statuslist.addValid(id, secret);
-    const dynamicSLBloomFilterVC = statuslist.createVcPayload();
+    const dynamicBloomFilterVC = statuslist.createVcPayload();
 
     const expired = new Date();
     expired.setFullYear(expired.getFullYear() - 1);
-    dynamicSLBloomFilterVC.exp = expired.getTime();
+    dynamicBloomFilterVC.exp = expired.getTime();
     const verifier = new CrlVerifier({
-      vc: dynamicSLBloomFilterVC,
+      vc: dynamicBloomFilterVC,
       timeCheck: true,
     });
     // create the token
@@ -91,10 +91,10 @@ describe('crl', () => {
     const id = randomUUID();
     const secret = createSecret();
     await statuslist.addInvalid(id, secret);
-    const dynamicSLBloomFilterVC = statuslist.createVcPayload();
+    const dynamicBloomFilterVC = statuslist.createVcPayload();
 
     const verifier = new CrlVerifier({
-      vc: dynamicSLBloomFilterVC,
+      vc: dynamicBloomFilterVC,
     });
     const duration = Math.floor(Date.now() / 1000 / DEFAULT_EPOCH);
     const token = await hmac(

@@ -1,15 +1,15 @@
 import BloomFilter from 'bloom-filters';
 import { deflate } from 'pako';
 import { DEFAULT_FALSE_POSITIVE, DEFAULT_SIZE } from '../const.js';
-import type { DynamicSLBloomFilterConfig } from '../dto/dynamic-sl-bloom-filter-config.js';
-import type { DynamicSLBloomFilterVC } from '../dto/dynamic-sl-bloom-filter.js';
+import type { DynamicBloomFilterConfig } from '../dto/dynamic-bloom-filter-config.js';
+import type { DynamicBloomFilterVC } from '../dto/dynamic-bloom-filter.js';
 import { base64Encode, hash } from '../util.js';
 import { Container } from './container.js';
 
 /**
  * A dynamic status list based on a bloom filter.
  */
-export class DynamicSLBloomFilter extends Container {
+export class DynamicBloomFilter extends Container {
   // posibliity of a false positive event
   private falsePositive: number;
   // size of the list
@@ -18,7 +18,7 @@ export class DynamicSLBloomFilter extends Container {
   // bloom filter used to store the values
   public bloomFilter: BloomFilter.BloomFilter;
 
-  constructor(config: DynamicSLBloomFilterConfig) {
+  constructor(config: DynamicBloomFilterConfig) {
     super(config);
     this.falsePositive = config.falsePositive ?? DEFAULT_FALSE_POSITIVE;
     this.size = config.size ?? DEFAULT_SIZE;
@@ -56,7 +56,7 @@ export class DynamicSLBloomFilter extends Container {
    * Creates an unsigned VC that includes the filter.
    * @returns unsigned payload
    */
-  createVcPayload(): DynamicSLBloomFilterVC {
+  createVcPayload(): DynamicBloomFilterVC {
     // gzip and base64 encode the filter
     const filter = base64Encode(deflate(this.bloomFilter._filter.array));
     // create the vc

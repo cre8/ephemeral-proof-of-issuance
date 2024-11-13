@@ -1,4 +1,4 @@
-# Dynamic status list
+# Dynamic Token Status List
 
 When using status management solution like a normal status list, the entries are static and allow a tracking of the status of the presented credentials by the relying party. Short lived credentials and status assertion are have be issued a lot of time without the usage to not be able to be monitored by the status manager. Also these both options do not work offline when not cached before.
 

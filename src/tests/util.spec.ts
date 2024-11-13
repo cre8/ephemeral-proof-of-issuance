@@ -5,7 +5,7 @@ import {
   DEFAULT_HASH_FUNCTION,
   DEFAULT_SIZE,
 } from '../const.js';
-import type { DynamicSLBloomFilterVC } from '../dto/dynamic-sl-bloom-filter.js';
+import type { DynamicBloomFilterVC } from '../dto/dynamic-bloom-filter.js';
 import { signVc } from '../util.js';
 
 describe('util', () => {
@@ -13,7 +13,7 @@ describe('util', () => {
     const alg = 'ES256';
     const { privateKey } = await generateKeyPair(alg);
     const date = new Date().getTime();
-    const vc: DynamicSLBloomFilterVC = {
+    const vc: DynamicBloomFilterVC = {
       jti: '',
       iss: '',
       iat: date,
