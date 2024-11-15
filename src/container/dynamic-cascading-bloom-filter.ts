@@ -17,8 +17,7 @@ export class DynamicCascadingBloomFilter extends Container {
 
   private cachHashes: boolean;
 
-  // save the invalid value of the valid hashed to check for false positive events since they should not be included in the first filter
-  private invalidOfValidHashes: Set<string> = new Set();
+  private validHashes: Set<string> = new Set();
 
   // save the invalid hashes to check that they are not included in the next filter
   private invalidHashes: Set<string> = new Set();
@@ -48,75 +47,70 @@ export class DynamicCascadingBloomFilter extends Container {
    */
   async addValid(s_id: string, secret: string) {
     const validHash = await this.calculateValidHash(secret, s_id);
-    this.bloomFilters[0].add(validHash);
-
-    //add the hash to the list
-    if (this.cachHashes) {
-      const invalidHash = await hash([validHash], this.hashFunction);
-      this.invalidOfValidHashes.add(invalidHash);
-    }
+    this.validHashes.add(validHash);
+    this.invalidHashes.delete(validHash);
     return this.createStatusVcPayload(secret, s_id);
   }
 
   /**
-   * Adds the invalid hash to the list
+   * Adds the invalid hash to the list. Remove it from the valid list.
    * @param s_id id of the vc
    * @param secret secret of the vc
    */
   async addInvalid(s_id: string, secret: string) {
     // Status hash to declare validity
     const validHash = await this.calculateValidHash(secret, s_id);
-    // remove the element in case it was added before
-    if (this.cachHashes && this.invalidOfValidHashes.has(validHash)) {
-      // will never be called right now
-      this.invalidOfValidHashes.delete(validHash);
-    }
-    const invalidHash = await hash([validHash], this.hashFunction);
-    // add it to the list to compare against the next filter
-    this.invalidHashes.add(invalidHash);
-    this.bloomFilters[0].add(invalidHash);
+    // we save the hash of an invalid one to proof against false positive events
+    this.invalidHashes.add(validHash);
+    this.validHashes.delete(validHash);
   }
 
   /**
    * Check if cascading filters are needed to eliminate false positives, building them recursively.
    */
   private async buildCascadingFilter() {
+    //reference: https://youtu.be/CZpqKvYyd9k?si=HDov8YwaHdbjaLey&t=556
     this.rounds++;
     if (this.rounds > 5) {
       console.log('Max rounds reached');
       return;
     }
-    const currentFilter = this.bloomFilters[this.bloomFilters.length - 1];
+    let currentFilter = this.bloomFilters[this.bloomFilters.length - 1];
     let newFilter = this.createFilter();
-    let filterCreated = false;
+    let filterCreated = 0;
 
-    // Process valid-but-false-positive entries (invalidOfValidHashes) for the current filter
-    for (const hashValue of this.invalidOfValidHashes) {
+    // we need to check for false positive events: no revoked hash should be included in the new filter
+    for (const hashValue of this.invalidHashes) {
       if (currentFilter.has(hashValue)) {
-        filterCreated = true;
+        // we found a false positive event, so we need to add it to the new filter
+        filterCreated++;
         newFilter.add(hashValue);
       }
     }
 
     // when we found false positive cases, we need to add the bloom filter and check for more false positive cases
-    if (filterCreated) {
+    if (filterCreated > 0) {
       this.bloomFilters.push(newFilter);
+      console.log('filter', this.bloomFilters.length - 1, ':', filterCreated);
+      currentFilter = this.bloomFilters[this.bloomFilters.length - 1];
       newFilter = this.createFilter();
-      // Verify that invalid hashes are not incorrectly marked as included in the new filter
-      const falsePositivesInNewFilter = new Set<string>();
-      for (const invalidHash of this.invalidHashes) {
-        if (newFilter.has(invalidHash)) {
-          falsePositivesInNewFilter.add(invalidHash);
+      filterCreated = 0;
+      // iterate over all valid hashes to make sure they are not included in the new filter
+      for (const hashValue of this.validHashes) {
+        if (currentFilter.has(hashValue)) {
+          console.log('false positive found');
+          // again we found a false positive event, so we need to add it to the new filter
+          filterCreated++;
+          newFilter.add(hashValue); // Add all invalid hashes to filter
         }
-        newFilter.add(invalidHash); // Add all invalid hashes to filter
       }
-      this.bloomFilters.push(newFilter);
-
       // If there are still false positives after adding invalid entries, recursively create a new filter
-      if (falsePositivesInNewFilter.size > 0) {
-        console.log('run');
-        console.log(this.invalidOfValidHashes);
+      if (filterCreated > 0) {
+        this.bloomFilters.push(newFilter);
+        console.log('filter', this.bloomFilters.length - 1, ':', filterCreated);
         await this.buildCascadingFilter(); // Recursive call
+      } else {
+        console.log('No false positives found');
       }
     }
   }
@@ -126,6 +120,11 @@ export class DynamicCascadingBloomFilter extends Container {
    * @returns unsigned payload
    */
   async createVcPayload(): Promise<DynamicCascadingBloomFilterVC> {
+    // build up the first filter
+    this.validHashes.forEach((validHash) =>
+      this.bloomFilters[0].add(validHash)
+    );
+    console.log('filter 0:', this.validHashes.size);
     this.rounds = 0;
     await this.buildCascadingFilter();
 

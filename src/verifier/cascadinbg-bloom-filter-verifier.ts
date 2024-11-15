@@ -35,24 +35,31 @@ export class CascadingBloomFilterVerifier extends Verifier {
    * @returns
    */
   async isValid(vc: CredentialStatusToken) {
-    const filter = 0;
     if (this.timeCheck && this.validUntil < Date.now())
       throw new Error('Bloom filter is no longer valid');
-    // TODO validate the signature of the vc
+    //TODO: validate the signature of the vc
     const validHash = await hash([vc.token, vc.sub], this.hashFunction);
-    const invalidHash = await hash([validHash], this.hashFunction);
-    //TODO: need to check for false positive events
-    if (this.bloomFilters[filter].has(validHash)) {
-      // check next filter
-      if (!this.bloomFilters[filter + 1].has(validHash)) {
+    // if the filter is even, the valid hash should not be included, if odd it should be included
+    for (let filter = 0; filter < this.bloomFilters.length; filter++) {
+      if (filter % 2 === 0) {
+        console.log(1);
+        // it is not included in the filter, therefore it was not inserted and it is not valid
+        if (!this.bloomFilters[filter].has(validHash)) {
+          return false;
+        } else if (filter === this.bloomFilters.length - 1) {
+          return true;
+        }
+        // else could be false positive, we need to check the next filter
       } else {
+        console.log(2);
+        if (!this.bloomFilters[filter].has(validHash)) {
+          //TODO: a wrong value is NEVER included in the second filter, it it will return true here...
+          return true;
+        } else if (filter === this.bloomFilters.length - 1) {
+          return false;
+        }
       }
-    } else {
-      // valid is not included, so it should be invalid or not managed by it at all
     }
-    return (
-      this.bloomFilters[filter].has(validHash) &&
-      !this.bloomFilters[filter].has(invalidHash)
-    );
+    throw Error('Should not reach this point');
   }
 }

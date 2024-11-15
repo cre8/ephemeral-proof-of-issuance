@@ -1,10 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
-import {
-  DEFAULT_EPOCH,
-  DEFAULT_FALSE_POSITIVE,
-  DEFAULT_SIZE,
-} from '../const.js';
+import { DEFAULT_EPOCH, DEFAULT_FALSE_POSITIVE } from '../const.js';
 import { createCredentialStatusToken } from '../holder.js';
 import { createSecret } from '../util.js';
 import { DynamicCascadingBloomFilterConfig } from '../dto/dynamic-cascading-bloom-filter-config.js';
@@ -42,7 +38,7 @@ describe('cascading bloom list', () => {
       id: randomUUID(),
       issuer,
       cacheHashed: true,
-      size: 25,
+      size: 10,
     };
     const statuslist = new DynamicCascadingBloomFilter(config);
 
