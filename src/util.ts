@@ -32,7 +32,7 @@ export function createSecret() {
  */
 export async function hash(
   inputs: string[],
-  usedFunction: HashFunctionName,
+  usedFunction: HashFunctionName
 ): Promise<string> {
   switch (usedFunction) {
     case 'MurmurHash3':
@@ -53,7 +53,7 @@ export async function hash(
 export async function hmac(
   value: string,
   secret: string,
-  hmacAlgorithm: HMACFunctionName,
+  hmacAlgorithm: HMACFunctionName
 ): Promise<string> {
   const enc = new TextEncoder();
   const algorithm = { name: 'HMAC', hash: hmacAlgorithm };
@@ -62,7 +62,7 @@ export async function hmac(
     .then((key) =>
       subtle
         .sign(algorithm.name, key, enc.encode(value))
-        .then((signature) => base64Encode(signature)),
+        .then((signature) => base64Encode(signature))
     );
 }
 
@@ -98,7 +98,7 @@ export function base64Decode(encoded: string): ArrayBuffer {
 export async function signVc(
   key: KeyLike,
   payload: JWTPayload,
-  header: JWTHeaderParameters,
+  header: JWTHeaderParameters
 ) {
   const jwt = new SignJWT({ ...payload })
     .setProtectedHeader(header)

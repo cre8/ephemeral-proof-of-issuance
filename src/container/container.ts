@@ -99,5 +99,9 @@ export abstract class Container {
    */
   abstract addInvalid(s_id: string, secret: string): Promise<void>;
 
-  abstract createVcPayload(): JWTPayload;
+  //TODO: maybe it should just be a promise to avoid wrong implementations
+  /**
+   * Creates an unsigned VC that includes the filter.
+   */
+  abstract createVcPayload(): JWTPayload | Promise<JWTPayload>;
 }

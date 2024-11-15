@@ -2,7 +2,7 @@ import type { JWTPayload } from 'jose';
 import type { HMACFunctionName } from '../util.js';
 
 /**
- * The Credential Status Secret carries a secret, which the issuer shares with the Holder, who transforms it into a token. DynamicBloomFilter strategy uses the secret as a seed.
+ * The Credential Status Secret carries a secret, which the issuer shares with the Holder, who transforms it into a token. DynamicghiBloomFilter strategy uses the secret as a seed.
  */
 export interface CredentialStatusSecretVc extends JWTPayload {
   // The time the token was issued

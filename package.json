@@ -1,5 +1,5 @@
 {
-  "name": "dynamic-status-list",
+  "name": "dynamic-token-status-list",
   "version": "0.0.1",
   "description": "An implementation of a dynamic status list to manage verifiable credentials.",
   "main": "dist/main.cjs.js",
