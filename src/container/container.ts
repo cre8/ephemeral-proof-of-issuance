@@ -5,7 +5,7 @@ import {
   DEFAULT_HASH_FUNCTION,
 } from '../const.js';
 import { ContainerConfig } from '../dto/container-config.js';
-import { CredentialStatusSecretVc } from '../dto/credential-status-secret.js';
+import { CredentialStatusSecretVcPayload } from '../dto/credential-status-secret-payload.js';
 import { HMACFunctionName, HashFunctionName, hash, hmac } from '../util.js';
 import { JWTPayload } from 'jose';
 
@@ -50,7 +50,7 @@ export abstract class Container {
   public createStatusVcPayload(
     secret: string,
     s_id: string
-  ): CredentialStatusSecretVc {
+  ): CredentialStatusSecretVcPayload {
     return {
       duration: this.duration,
       secret,
@@ -90,7 +90,7 @@ export abstract class Container {
   abstract addValid(
     s_id: string,
     secret: string
-  ): Promise<CredentialStatusSecretVc>;
+  ): Promise<CredentialStatusSecretVcPayload>;
 
   /**
    * Adds the invalid hash to the list

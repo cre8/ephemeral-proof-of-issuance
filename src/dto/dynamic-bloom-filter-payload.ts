@@ -1,9 +1,9 @@
-import { ContainerVC } from './container-vc.js';
+import { ContainerVCPayload } from './container-vc-payload.js';
 
 /**
  * Defines the credential that is holding the status list.
  */
-export interface DynamicBloomFilterVC extends ContainerVC {
+export interface DynamicBloomFilterVCPayload extends ContainerVCPayload {
   // First, GZIP-compressed, then base64 encoded values of a Bloom Filter.
   content: string;
   // how many elements should be included into the filter

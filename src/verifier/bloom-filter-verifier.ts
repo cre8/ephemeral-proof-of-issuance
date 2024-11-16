@@ -1,10 +1,10 @@
 import BloomFilter from 'bloom-filters';
 import { inflate } from 'pako';
-import type { CredentialStatusToken } from '../dto/credential-status-token.js';
+import type { CredentialStatusTokenPayload } from '../dto/credential-status-token-payload.js';
 import { base64Decode, hash } from '../util.js';
 import { Verifier } from './verifier.js';
 import { VerifierConfig } from '../dto/verifier-config.js';
-import { DynamicBloomFilterVC } from '../dto/dynamic-bloom-filter.js';
+import { DynamicBloomFilterVCPayload } from '../dto/dynamic-bloom-filter-payload.js';
 
 /**
  * Verifier that can be used to verify bloomfilter
@@ -17,7 +17,7 @@ export class BloomFilterVerifier extends Verifier {
    * Iinit the verifier
    * @param config
    */
-  constructor(config: VerifierConfig<DynamicBloomFilterVC>) {
+  constructor(config: VerifierConfig<DynamicBloomFilterVCPayload>) {
     super(config);
 
     const size = config.vc.size;
@@ -31,7 +31,7 @@ export class BloomFilterVerifier extends Verifier {
    * @param vc
    * @returns
    */
-  async isValid(vc: CredentialStatusToken) {
+  async isValid(vc: CredentialStatusTokenPayload) {
     if (this.timeCheck && this.validUntil < Date.now())
       throw new Error('Bloom filter is no longer valid');
     // TODO validate the signature of the vc

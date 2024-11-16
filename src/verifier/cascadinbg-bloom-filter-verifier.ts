@@ -1,10 +1,10 @@
 import BloomFilter from 'bloom-filters';
 import { inflate } from 'pako';
-import type { CredentialStatusToken } from '../dto/credential-status-token.js';
+import type { CredentialStatusTokenPayload } from '../dto/credential-status-token-payload.js';
 import { base64Decode, hash } from '../util.js';
 import { Verifier } from './verifier.js';
 import { VerifierConfig } from '../dto/verifier-config.js';
-import { DynamicCascadingBloomFilterVC } from '../dto/dynamic-cascading-bloom-filter.js';
+import { DynamicCascadingBloomFilterVCPayload } from '../dto/dynamic-cascading-bloom-filter-payload.js';
 
 /**
  * Verifier that can be used to verify bloomfilter
@@ -17,7 +17,7 @@ export class CascadingBloomFilterVerifier extends Verifier {
    * Iinit the verifier
    * @param config
    */
-  constructor(config: VerifierConfig<DynamicCascadingBloomFilterVC>) {
+  constructor(config: VerifierConfig<DynamicCascadingBloomFilterVCPayload>) {
     super(config);
 
     const size = config.vc.size;
@@ -30,19 +30,17 @@ export class CascadingBloomFilterVerifier extends Verifier {
   }
 
   /**
-   * Checks if the valid value is included and the invalid is not included
+   * Checks if the valid value is included and the invalid is not included.
    * @param vc
    * @returns
    */
-  async isValid(vc: CredentialStatusToken) {
+  async isValid(vc: CredentialStatusTokenPayload) {
     if (this.timeCheck && this.validUntil < Date.now())
       throw new Error('Bloom filter is no longer valid');
-    //TODO: validate the signature of the vc
     const validHash = await hash([vc.token, vc.sub], this.hashFunction);
     // if the filter is even, the valid hash should not be included, if odd it should be included
     for (let filter = 0; filter < this.bloomFilters.length; filter++) {
       if (filter % 2 === 0) {
-        console.log(1);
         // it is not included in the filter, therefore it was not inserted and it is not valid
         if (!this.bloomFilters[filter].has(validHash)) {
           return false;
@@ -51,9 +49,7 @@ export class CascadingBloomFilterVerifier extends Verifier {
         }
         // else could be false positive, we need to check the next filter
       } else {
-        console.log(2);
         if (!this.bloomFilters[filter].has(validHash)) {
-          //TODO: a wrong value is NEVER included in the second filter, it it will return true here...
           return true;
         } else if (filter === this.bloomFilters.length - 1) {
           return false;

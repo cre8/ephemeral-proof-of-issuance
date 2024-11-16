@@ -1,9 +1,9 @@
-import { ContainerVC } from './container-vc.js';
+import { ContainerVCPayload } from './container-vc-payload.js';
 
 /**
  * Configuration for the bloom filter verifier
  */
-export interface VerifierConfig<T extends ContainerVC> {
+export interface VerifierConfig<T extends ContainerVCPayload> {
   timeCheck?: boolean;
   vc: T;
 }

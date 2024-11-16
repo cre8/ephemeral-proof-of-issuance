@@ -1,7 +1,7 @@
 import { JWTPayload } from 'jose';
 import { HashFunctionName } from '../util.js';
 
-export interface ContainerVC extends JWTPayload {
+export interface ContainerVCPayload extends JWTPayload {
   // The unique identifier of the vc.
   jti: string;
 

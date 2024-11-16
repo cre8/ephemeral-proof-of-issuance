@@ -1,9 +1,9 @@
 import { JWTPayload } from 'jose';
 import { ContainerConfig } from '../dto/container-config.js';
-import { CredentialStatusSecretVc } from '../dto/credential-status-secret.js';
+import { CredentialStatusSecretVcPayload } from '../dto/credential-status-secret-payload.js';
 import { Container } from './container.js';
 import { hash } from '../util.js';
-import { DynamicCRLVC } from '../dto/dynamic-crl-vc.js';
+import { DynamicCRLVCPayload } from '../dto/dynamic-crl-vc-payload.js';
 
 /**
  * A dynamic status list based on a CRL.
@@ -18,7 +18,7 @@ export class DynamicCRL extends Container {
   async addValid(
     s_id: string,
     secret: string
-  ): Promise<CredentialStatusSecretVc> {
+  ): Promise<CredentialStatusSecretVcPayload> {
     const validHash = await this.calculateValidHash(secret, s_id);
     if (this.entries.has(validHash)) {
       throw new Error('Entry already exists');
@@ -33,7 +33,7 @@ export class DynamicCRL extends Container {
     this.entries.add(invalidHash);
   }
 
-  createVcPayload(): DynamicCRLVC {
+  createVcPayload(): DynamicCRLVCPayload {
     // create the vc
     const issuanceDate = new Date();
     const expirationDate = new Date();

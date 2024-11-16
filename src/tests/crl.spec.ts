@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { DEFAULT_EPOCH, DEFAULT_FALSE_POSITIVE } from '../const.js';
-import type { CredentialStatusToken } from '../dto/credential-status-token.js';
+import type { CredentialStatusTokenPayload } from '../dto/credential-status-token-payload.js';
 import type { VcStatus } from '../dto/vc-status.js';
 import { createCredentialStatusToken } from '../holder.js';
 import { createSecret, hash, hmac } from '../util.js';
@@ -103,7 +103,7 @@ describe('crl', () => {
       statuslist.hmacFunction
     );
     // create a dummy vc because the valid function requires one
-    const vc: CredentialStatusToken = {
+    const vc: CredentialStatusTokenPayload = {
       exp: 0,
       iat: 0,
       sub: id,

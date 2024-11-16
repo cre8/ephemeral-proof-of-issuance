@@ -3,7 +3,7 @@ import { deflate } from 'pako';
 import { DEFAULT_FALSE_POSITIVE, DEFAULT_SIZE } from '../const.js';
 import { base64Encode, hash } from '../util.js';
 import { Container } from './container.js';
-import { DynamicCascadingBloomFilterVC } from '../dto/dynamic-cascading-bloom-filter.js';
+import { DynamicCascadingBloomFilterVCPayload } from '../dto/dynamic-cascading-bloom-filter-payload.js';
 import { DynamicCascadingBloomFilterConfig } from '../dto/dynamic-cascading-bloom-filter-config.js';
 
 /**
@@ -119,7 +119,7 @@ export class DynamicCascadingBloomFilter extends Container {
    * Creates an unsigned VC that includes the filter.
    * @returns unsigned payload
    */
-  async createVcPayload(): Promise<DynamicCascadingBloomFilterVC> {
+  async createVcPayload(): Promise<DynamicCascadingBloomFilterVCPayload> {
     // build up the first filter
     this.validHashes.forEach((validHash) =>
       this.bloomFilters[0].add(validHash)

@@ -6,7 +6,7 @@ import {
   DEFAULT_FALSE_POSITIVE,
   DEFAULT_SIZE,
 } from '../const.js';
-import type { CredentialStatusToken } from '../dto/credential-status-token.js';
+import type { CredentialStatusTokenPayload } from '../dto/credential-status-token-payload.js';
 import type { DynamicBloomFilterConfig } from '../dto/dynamic-bloom-filter-config.js';
 import type { VcStatus } from '../dto/vc-status.js';
 import { DynamicBloomFilter } from '../container/dynamic-bloom-filter.js';
@@ -109,7 +109,7 @@ describe('bloom list', () => {
       statuslist.hmacFunction
     );
     // create a dummy vc because the valid function requires one
-    const vc: CredentialStatusToken = {
+    const vc: CredentialStatusTokenPayload = {
       exp: 0,
       iat: 0,
       sub: id,

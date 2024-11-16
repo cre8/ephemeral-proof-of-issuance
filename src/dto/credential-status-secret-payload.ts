@@ -4,7 +4,7 @@ import type { HMACFunctionName } from '../util.js';
 /**
  * The Credential Status Secret carries a secret, which the issuer shares with the Holder, who transforms it into a token. DynamicghiBloomFilter strategy uses the secret as a seed.
  */
-export interface CredentialStatusSecretVc extends JWTPayload {
+export interface CredentialStatusSecretVcPayload extends JWTPayload {
   // The time the token was issued
   iat: number;
   // MUST match the ID property of the associated Verifiable Credential
