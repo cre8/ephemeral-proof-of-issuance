@@ -12,14 +12,11 @@ The dynamic status list is in general a list of time based hashed. The hash is c
 
 The dynamic list can be managed in multiple ways. In all ways a JsonWebToken is used to hold the information. The type of the container has no impact on the privacy aspect, but the required resources and the way of verification.
 
-### CRL
+### CL
 
-The values are added as a list that is used for matching. While this approach is quite simple, it will consume a lot of resources when number of entries grows.
+The values are added as a list that is used for matching. While this approach is quite simple, it will consume a lot of resources when number of entries grows. The approach is similar to a CRL, but instead of publishing the revoked ones, a proof of issuance is published that has to be sent from the wallet to the relying party.
 
-### Bloom filter
+### Cascading Bloom filter (Deprecated)
 
-The values are added to a bloom filter. This approach is more efficient in terms of used resources, but comes with the risk of false positives.
-
-### Cascading bloom filters
-
-This approach will eliminate the risk of false positives, but is not implemented yet.
+The values are added to a bloom filter. This approach is more efficient in terms of used resources, but comes with the risk of false positives. After some tests it turned out that it's quite easy to generate a proof that marks a revoked credential is valud (easy = less than 10 seconds).
+Because of this the old containers are removed from this repo.
