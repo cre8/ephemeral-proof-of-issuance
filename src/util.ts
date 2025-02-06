@@ -32,15 +32,14 @@ export function createSecret() {
  */
 export async function hash(
   inputs: string[],
-  usedFunction: HashFunctionName
-): Promise<string> {
+  usedFunction: HashFunctionName,
+): Promise<ArrayBuffer> {
   switch (usedFunction) {
-    case 'MurmurHash3':
-      return Promise.resolve(murmurhash.v3(inputs.join('')).toString());
     case 'SHA-256':
-      return subtle
-        .digest('SHA-256', new TextEncoder().encode(inputs.join('')))
-        .then((res) => base64Encode(res));
+      return subtle.digest(
+        'SHA-256',
+        new TextEncoder().encode(inputs.join('')),
+      );
     default:
       throw Error(`Hash function ${usedFunction} not supported`);
   }
@@ -53,7 +52,7 @@ export async function hash(
 export async function hmac(
   value: string,
   secret: string,
-  hmacAlgorithm: HMACFunctionName
+  hmacAlgorithm: HMACFunctionName,
 ): Promise<string> {
   const enc = new TextEncoder();
   const algorithm = { name: 'HMAC', hash: hmacAlgorithm };
@@ -62,7 +61,7 @@ export async function hmac(
     .then((key) =>
       subtle
         .sign(algorithm.name, key, enc.encode(value))
-        .then((signature) => base64Encode(signature))
+        .then((signature) => base64Encode(signature)),
     );
 }
 
@@ -98,7 +97,7 @@ export function base64Decode(encoded: string): ArrayBuffer {
 export async function signVc(
   key: KeyLike,
   payload: JWTPayload,
-  header: JWTHeaderParameters
+  header: JWTHeaderParameters,
 ) {
   const jwt = new SignJWT({ ...payload })
     .setProtectedHeader(header)

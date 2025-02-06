@@ -1,4 +1,4 @@
-import type { HashFunctionName, HMACFunctionName } from '../util.js';
+import type { HMACFunctionName, HashFunctionName } from '../util.js';
 
 export interface ContainerConfig {
   // id of the status list

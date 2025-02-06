@@ -1,13 +1,18 @@
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
+import type { JWTPayload } from 'jose';
 import {
   DEFAULT_EPOCH,
-  DEFAULT_HMAC_FUNCTION,
   DEFAULT_HASH_FUNCTION,
+  DEFAULT_HMAC_FUNCTION,
 } from '../const.js';
-import { ContainerConfig } from '../dto/container-config.js';
-import { CredentialStatusSecretVcPayload } from '../dto/credential-status-secret-payload.js';
-import { HMACFunctionName, HashFunctionName, hash, hmac } from '../util.js';
-import { JWTPayload } from 'jose';
+import type { ContainerConfig } from '../dto/container-config.js';
+import type { CredentialStatusSecretVcPayload } from '../dto/credential-status-secret-payload.js';
+import {
+  type HMACFunctionName,
+  type HashFunctionName,
+  hash,
+  hmac,
+} from '../util.js';
 
 /**
  * Base class for all containers that are used to store valid and invalid hashes.
@@ -49,7 +54,7 @@ export abstract class Container {
    */
   public createStatusVcPayload(
     secret: string,
-    s_id: string
+    s_id: string,
   ): CredentialStatusSecretVcPayload {
     return {
       duration: this.duration,
@@ -70,13 +75,13 @@ export abstract class Container {
    */
   protected async calculateValidHash(
     secret: string,
-    s_id: string
-  ): Promise<string> {
+    s_id: string,
+  ): Promise<ArrayBuffer> {
     // time based password
     const token = await hmac(
       this.duration.toString(),
       secret,
-      this.hmacFunction
+      this.hmacFunction,
     );
     // Status hash to declare validity
     return hash([token, s_id], this.hashFunction);
@@ -89,7 +94,7 @@ export abstract class Container {
    */
   abstract addValid(
     s_id: string,
-    secret: string
+    secret: string,
   ): Promise<CredentialStatusSecretVcPayload>;
 
   /**
@@ -97,7 +102,7 @@ export abstract class Container {
    * @param s_id id of the vc
    * @param secret secret of the vc
    */
-  abstract addInvalid(s_id: string, secret: string): Promise<void>;
+  //abstract addInvalid(s_id: string, secret: string): Promise<void>;
 
   //TODO: maybe it should just be a promise to avoid wrong implementations
   /**

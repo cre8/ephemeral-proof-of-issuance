@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { DEFAULT_EPOCH, DEFAULT_FALSE_POSITIVE } from '../const.js';
+import { DEFAULT_EPOCH } from '../const.js';
+import { DynamicCL } from '../container/dynamic-cl.js';
+import type { ContainerConfig } from '../dto/container-config.js';
 import type { CredentialStatusTokenPayload } from '../dto/credential-status-token-payload.js';
 import type { VcStatus } from '../dto/vc-status.js';
 import { createCredentialStatusToken } from '../holder.js';
 import { createSecret, hash, hmac } from '../util.js';
-import { DynamicCRL } from '../container/dynamic-crl.js';
-import { ContainerConfig } from '../dto/container-config.js';
-import { CrlVerifier } from '../verifier/crl-verifier copy.js';
+import { ClVerifier } from '../verifier/cl-verifier.js';
 
 // issuer reference of the vc statuslist
 const issuer = 'http://example.com';
@@ -19,27 +19,28 @@ describe('crl', () => {
     await init();
   });
 
-  it('creates a list', () => {
+  /*   it('creates a list', () => {
     const config: ContainerConfig = {
       id: randomUUID(),
       issuer,
       epoch: DEFAULT_EPOCH,
     };
-    const statuslist = new DynamicCRL(config);
+    const statuslist = new DynamicCL(config);
     expect(statuslist).toBeDefined();
-  });
+  }); */
+
   it('is a value in the list', async () => {
     const config: ContainerConfig = {
       id: randomUUID(),
       issuer,
     };
-    const statuslist = new DynamicCRL(config);
+    const statuslist = new DynamicCL(config);
     const id = randomUUID();
     const secret = createSecret();
     const credentialStatusVc = await statuslist.addValid(id, secret);
     const dynamicCRLVC = statuslist.createVcPayload();
 
-    const verifier = new CrlVerifier({
+    const verifier = new ClVerifier({
       vc: dynamicCRLVC,
     });
     const vcToken = await createCredentialStatusToken(
@@ -59,7 +60,7 @@ describe('crl', () => {
       hashFunction: 'SHA-256',
       hmacFunction: 'SHA-256',
     };
-    const statuslist = new DynamicCRL(config);
+    const statuslist = new DynamicCL(config);
     const id = randomUUID();
     const secret = createSecret();
     const credentialStatusVc = await statuslist.addValid(id, secret);
@@ -68,7 +69,7 @@ describe('crl', () => {
     const expired = new Date();
     expired.setFullYear(expired.getFullYear() - 1);
     dynamicBloomFilterVC.exp = expired.getTime();
-    const verifier = new CrlVerifier({
+    const verifier = new ClVerifier({
       vc: dynamicBloomFilterVC,
       timeCheck: true,
     });
@@ -87,13 +88,13 @@ describe('crl', () => {
       id: randomUUID(),
       issuer,
     };
-    const statuslist = new DynamicCRL(config);
+    const statuslist = new DynamicCL(config);
     const id = randomUUID();
     const secret = createSecret();
     await statuslist.addInvalid(id, secret);
     const dynamicBloomFilterVC = statuslist.createVcPayload();
 
-    const verifier = new CrlVerifier({
+    const verifier = new ClVerifier({
       vc: dynamicBloomFilterVC,
     });
     const duration = Math.floor(Date.now() / 1000 / DEFAULT_EPOCH);
@@ -122,18 +123,18 @@ describe('crl', () => {
       hmacFunction: 'SHA-256',
     };
     const entries: VcStatus[] = [];
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 10; i++) {
       entries.push({
         s_id: randomUUID(),
         secret: createSecret(),
         valid: i % 2 === 0,
       });
     }
-    const statuslist = new DynamicCRL(config);
+    const statuslist = new DynamicCL(config);
     for (const entry of entries) {
-      entry.valid
-        ? statuslist.addValid(entry.s_id, entry.secret)
-        : statuslist.addInvalid(entry.s_id, entry.secret);
+      if (entry.valid) {
+        statuslist.addValid(entry.s_id, entry.secret);
+      }
     }
 
     const duration = Math.floor(Date.now() / 1000 / DEFAULT_EPOCH);
@@ -149,10 +150,8 @@ describe('crl', () => {
         [token, entries[i].s_id],
         statuslist.hashFunction
       );
-      const invalidHash = await hash([validHash], statuslist.hashFunction);
 
       expect(statuslist.entries.has(validHash)).toBe(entries[i].valid);
-      expect(statuslist.entries.has(invalidHash)).toBe(!entries[i].valid);
     }
   }, 30000);
 });

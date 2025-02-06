@@ -1,5 +1,5 @@
-import { JWTPayload } from 'jose';
-import { HashFunctionName } from '../util.js';
+import type { JWTPayload } from 'jose';
+import type { HashFunctionName } from '../util.js';
 
 export interface ContainerVCPayload extends JWTPayload {
   // The unique identifier of the vc.

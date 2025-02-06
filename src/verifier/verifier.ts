@@ -1,7 +1,7 @@
-import { JWTPayload } from 'jose';
-import { HashFunctionName } from '../util.js';
-import { VerifierConfig } from '../dto/verifier-config.js';
-import { ContainerVCPayload } from '../dto/container-vc-payload.js';
+import type { JWTPayload } from 'jose';
+import type { ContainerVCPayload } from '../dto/container-vc-payload.js';
+import type { VerifierConfig } from '../dto/verifier-config.js';
+import type { HashFunctionName } from '../util.js';
 
 export abstract class Verifier {
   // time when the bloom filter is no longer valid

@@ -17,7 +17,7 @@
     "lint": "npx @biomejs/biome check src",
     "format": "npx @biomejs/biome check --write src",
     "test": "vitest",
-    "benchmark": "tsx src/benchmark/worker.ts"
+    "benchmark": "tsx benchmark/crl.ts"
   },
   "type": "module",
   "author": "Mirko Mollik <mirkomollik@gmail.com>",
@@ -26,6 +26,7 @@
     "@biomejs/biome": "1.9.4",
     "@types/node": "^22.9.0",
     "@types/pako": "^2.0.3",
+    "base64url": "^3.0.1",
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",

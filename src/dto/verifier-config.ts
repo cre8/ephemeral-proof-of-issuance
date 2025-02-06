@@ -1,4 +1,4 @@
-import { ContainerVCPayload } from './container-vc-payload.js';
+import type { ContainerVCPayload } from './container-vc-payload.js';
 
 /**
  * Configuration for the bloom filter verifier
