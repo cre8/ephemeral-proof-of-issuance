@@ -17,6 +17,8 @@
     "lint": "npx @biomejs/biome check src",
     "format": "npx @biomejs/biome check --write src",
     "test": "vitest",
+    "test:browser": "vitest --config vite.browser.config.ts --browser",
+    "test:all": "vitest && vitest --config vite.browser.config.ts --browser",
     "benchmark": "tsx benchmark/crl.ts"
   },
   "type": "module",
@@ -24,18 +26,18 @@
   "license": "Apache 2.0",
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@types/node": "^22.9.0",
+    "@types/node": "^22.13.1",
     "@types/pako": "^2.0.3",
+    "@vitest/browser": "^3.0.5",
     "base64url": "^3.0.1",
-    "tsup": "^8.3.5",
+    "happy-dom": "^17.0.0",
+    "tsup": "^8.3.6",
     "tsx": "^4.19.2",
-    "typescript": "^5.6.3",
-    "vitest": "^2.1.4"
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
   },
   "dependencies": {
-    "bloom-filters": "^3.0.2",
     "jose": "^5.9.6",
-    "murmurhash": "^2.0.1",
     "pako": "^2.1.0"
   },
   "tsup": {
