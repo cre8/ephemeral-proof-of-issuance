@@ -1,8 +1,8 @@
 import { deflate, inflate } from 'pako';
 import type { CredentialStatusSecretVcPayload } from '../dto/credential-status-secret-payload.js';
 import type { DynamicCLVCPayload } from '../dto/dynamic-cl-vc-payload.js';
-import { Container } from './container.js';
 import { Entries } from '../dto/entries.js';
+import { Container } from './container.js';
 
 /**
  * A dynamic status list based on a CL.
@@ -12,7 +12,7 @@ export class DynamicCL extends Container {
 
   async addValid(
     s_id: string,
-    secret: string
+    secret: string,
   ): Promise<CredentialStatusSecretVcPayload> {
     const validHash = await this.calculateValidHash(secret, s_id);
     if (this.entries.has(validHash)) {
@@ -75,7 +75,7 @@ export class DynamicCL extends Container {
     // Convert lengths to bytes and prepend them to the data
     const lengthsBuffer = new Uint8Array(lengths.buffer);
     const finalArray = new Uint8Array(
-      lengthsBuffer.length + mergedArray.length
+      lengthsBuffer.length + mergedArray.length,
     );
     finalArray.set(lengthsBuffer, 0);
     finalArray.set(mergedArray, lengthsBuffer.length);

@@ -45,7 +45,7 @@ describe('crl', () => {
     });
     const vcToken = await createCredentialStatusToken(
       credentialStatusVc,
-      issuer
+      issuer,
     );
     expect(await verifier.isValid(vcToken)).toBe(true);
 
@@ -76,10 +76,10 @@ describe('crl', () => {
     // create the token
     const vcToken = await createCredentialStatusToken(
       credentialStatusVc,
-      issuer
+      issuer,
     );
     await expect(verifier.isValid(vcToken)).rejects.toThrow(
-      'CRL is no longer valid'
+      'CRL is no longer valid',
     );
   });
 
@@ -101,7 +101,7 @@ describe('crl', () => {
     const token = await hmac(
       duration.toString(),
       secret,
-      statuslist.hmacFunction
+      statuslist.hmacFunction,
     );
     // create a dummy vc because the valid function requires one
     const vc: CredentialStatusTokenPayload = {
@@ -143,12 +143,12 @@ describe('crl', () => {
       const token = await hmac(
         duration.toString(),
         entries[i].secret,
-        statuslist.hmacFunction
+        statuslist.hmacFunction,
       );
 
       const validHash = await hash(
         [token, entries[i].s_id],
-        statuslist.hashFunction
+        statuslist.hashFunction,
       );
 
       expect(statuslist.entries.has(validHash)).toBe(entries[i].valid);

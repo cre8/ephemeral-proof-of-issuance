@@ -1,8 +1,8 @@
 import { generateKeyPair } from 'jose';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_HASH_FUNCTION } from '../const.js';
+import type { ContainerVCPayload } from '../dto/container-vc-payload.js';
 import { signVc } from '../util.js';
-import { ContainerVCPayload } from '../dto/container-vc-payload.js';
 
 describe('util', () => {
   it('sign a vc', async () => {
