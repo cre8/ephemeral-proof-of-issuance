@@ -1,22 +1,74 @@
 # Dynamic Token Status List
 
-When using status management solution like a normal status list, the entries are static and allow a tracking of the status of the presented credentials by the relying party. Short lived credentials and status assertion are have be issued a lot of time without the usage to not be able to be monitored by the status manager. Also these both options do not work offline when not cached before.
+Traditional status management solutions, such as status lists or revocation
+lists, rely on static entries that allow relying parties to track the status of
+presented credentials. However, these approaches have several drawbacks:
 
-The dynamic status list approach is privacy friendly approach where the index in the status list is dynamic to reduce traceability by the relying party.
+- **Privacy concerns**: Static entries enable tracking over time.
+- **Inefficiency with short-lived credentials**: Frequent reissuance is
+  required.
+- **Offline verification issues**: These methods do not work offline unless
+  previously cached.
 
-## Privacy with time based tokens
+The **dynamic status list** provides a privacy-friendly alternative by using
+dynamic identifiers, reducing traceability by relying parties over time.
 
-The dynamic status list is in general a list of time based hashed. The hash is calculated with a time based token and the credential id as input. The secret to calculate the time based token is only known by the status manager and the holder. The relying party can only verify the status of the credential by the time based token once presented by the holder. Only during this time frame the relying party can verify the status of the credential.
+## Features
 
-## Container
+- **Privacy with time-based tokens**: Limits the verification window to reduce
+  tracking.
+- **Flexible cryptographic design**: Does not depend on a specific algorithm to
+  function.
+- **Supports multiple formats**: Can be used with both **JSON Web Tokens
+  (JWTs)** and **CBOR Web Tokens (CWTs)**.
+- **Zero-Knowledge Proof-like properties**: The holder can generate a proof
+  without revealing the secret, enhancing privacy.
 
-The dynamic list can be managed in multiple ways. In all ways a JsonWebToken is used to hold the information. The type of the container has no impact on the privacy aspect, but the required resources and the way of verification.
+## Privacy with Time-Based Tokens
 
-### CL
+The dynamic status list is essentially a list of **time-based hashes**. These
+hashes are calculated using a **time-based token** and the **credential ID** as
+inputs. The secret to generating the time-based token is shared **only** between
+the **status manager** and the **holder**.
 
-The values are added as a list that is used for matching. While this approach is quite simple, it will consume a lot of resources when number of entries grows. The approach is similar to a CRL, but instead of publishing the revoked ones, a proof of issuance is published that has to be sent from the wallet to the relying party.
+### Verification Process
 
-### Cascading Bloom filter (Deprecated)
+- The relying party can verify a credential's status **only when the holder
+  presents the time-based token**.
+- The verification window is limited to a specific timeframe, preventing
+  long-term tracking.
+- This approach enhances **privacy and security** by ensuring dynamic,
+  time-sensitive status verification.
+- The holder can generate a proof that their credential is valid without
+  exposing the secret used to generate the proof, making it conceptually similar
+  to a **zero-knowledge proof**.
 
-The values are added to a bloom filter. This approach is more efficient in terms of used resources, but comes with the risk of false positives. After some tests it turned out that it's quite easy to generate a proof that marks a revoked credential is valud (easy = less than 10 seconds).
-Because of this the old containers are removed from this repo.
+## Status List Containers
+
+The dynamic status list can be managed using different container formats, all of
+which utilize **JWTs or CWTs** to store information. The choice of container
+does not affect privacy but impacts **resource efficiency and verification
+methods**.
+
+### CL (Compact List)
+
+- Values are stored as a **list** for direct matching.
+- Simple implementation but **resource-intensive** as the list grows.
+- Similar to a Certificate Revocation List (CRL), but instead of publishing
+  revoked credentials, a **proof of issuance** is published.
+- The wallet must send this proof to the relying party for verification.
+
+### Cascading Bloom Filter (**Deprecated**)
+
+- Values are stored in a **Bloom filter** to improve resource efficiency.
+- However, this method introduces **false positives**, which can compromise
+  security.
+- Testing showed that **revoked credentials could be falsely marked as valid
+  within seconds**.
+- Due to these security concerns, **this method has been removed** from the
+  repository.
+
+---
+This project aims to enhance privacy while maintaining efficiency in status
+verification. For further details or contributions, please refer to the
+repository documentation.
