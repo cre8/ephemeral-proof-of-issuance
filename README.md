@@ -72,3 +72,13 @@ methods**.
 This project aims to enhance privacy while maintaining efficiency in status
 verification. For further details or contributions, please refer to the
 repository documentation.
+
+## Benchmarks
+
+The following benchmarks were conducted to evaluate the performance and result:
+
+![Benchmark Results](./benchmark/chart.png)
+
+Each entry is a 32-byte hash. The size is increased because of the base64 encoding to be represented in a JWT. Compressing the hashes has no real impact on the size.
+
+The compression via a bloom filter brings the a higher risk of false positives, so it is not recommended.

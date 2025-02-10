@@ -13,13 +13,11 @@ export class DynamicCL extends Container {
   async addValid(
     s_id: string,
     secret: string,
-  ): Promise<CredentialStatusSecretVcPayload> {
+    getSecretVC = true
+  ): Promise<CredentialStatusSecretVcPayload | void> {
     const validHash = await this.calculateValidHash(secret, s_id);
-    if (this.entries.has(validHash)) {
-      throw new Error('Entry already exists');
-    }
     this.entries.add(validHash);
-    return this.createStatusVcPayload(secret, s_id);
+    return getSecretVC ? this.createStatusVcPayload(secret, s_id) : undefined;
   }
 
   /**
@@ -58,11 +56,7 @@ export class DynamicCL extends Container {
     // Store lengths of each buffer
     const array = this.entries.array();
     const lengths = new Uint32Array(array.length);
-    //TODO: when all element has the same length, we can just calculate it
-    const totalLength = array.reduce((sum, buf, index) => {
-      lengths[index] = buf.byteLength;
-      return sum + buf.byteLength;
-    }, 0);
+    const totalLength = array.length * 32;
 
     // Merge all ArrayBuffers into a single Uint8Array
     const mergedArray = new Uint8Array(totalLength);
@@ -75,16 +69,25 @@ export class DynamicCL extends Container {
     // Convert lengths to bytes and prepend them to the data
     const lengthsBuffer = new Uint8Array(lengths.buffer);
     const finalArray = new Uint8Array(
-      lengthsBuffer.length + mergedArray.length,
+      lengthsBuffer.length + mergedArray.length
     );
     finalArray.set(lengthsBuffer, 0);
     finalArray.set(mergedArray, lengthsBuffer.length);
 
     // Compress using pako
-    const compressed = deflate(finalArray);
+    const compressed: Uint8Array = deflate(finalArray);
 
     // Convert compressed data to Base64 string
-    return btoa(String.fromCharCode(...compressed));
+    return this.arrayBufferToBase64(compressed.buffer as ArrayBuffer);
+  }
+
+  arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
   }
 
   /**
