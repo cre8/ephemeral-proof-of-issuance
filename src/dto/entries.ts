@@ -35,7 +35,7 @@ export class Entries {
    */
   has(array: ArrayBuffer) {
     return Array.from(this.entries).some((entry) =>
-      this.arrayBuffersEqual(entry, array)
+      this.arrayBuffersEqual(entry, array),
     );
   }
 

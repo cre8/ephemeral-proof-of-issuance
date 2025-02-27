@@ -3,12 +3,12 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { DEFAULT_EPOCH } from '../const.js';
 import { DynamicList } from '../container/dynamic-list.js';
 import type { ContainerConfig } from '../dto/container-config.js';
+import type { CredentialStatusSecretVcPayload } from '../dto/credential-status-secret-payload.js';
 import type { CredentialStatusTokenPayload } from '../dto/credential-status-token-payload.js';
 import type { VcStatus } from '../dto/vc-status.js';
 import { createCredentialStatusToken } from '../holder.js';
 import { createSecret, hash, hmac } from '../util.js';
 import { ClVerifier } from '../verifier/cl-verifier.js';
-import { CredentialStatusSecretVcPayload } from '../dto/credential-status-secret-payload.js';
 
 // issuer reference of the vc statuslist
 const issuer = 'http://example.com';
@@ -42,7 +42,7 @@ describe('list', () => {
 
     const credentialStatusVc = (await statuslist.addValid(
       id,
-      secret
+      secret,
     )) as CredentialStatusSecretVcPayload;
     const dynamicCRLVC = statuslist.createVcPayload();
 
@@ -51,7 +51,7 @@ describe('list', () => {
     });
     const vcToken = await createCredentialStatusToken(
       credentialStatusVc,
-      issuer
+      issuer,
     );
     expect(await verifier.isValid(vcToken)).toBe(true);
 
@@ -71,7 +71,7 @@ describe('list', () => {
     const secret = createSecret();
     const credentialStatusVc = (await statuslist.addValid(
       id,
-      secret
+      secret,
     )) as CredentialStatusSecretVcPayload;
     const dynamicBloomFilterVC = statuslist.createVcPayload();
 
@@ -85,10 +85,10 @@ describe('list', () => {
     // create the token
     const vcToken = await createCredentialStatusToken(
       credentialStatusVc,
-      issuer
+      issuer,
     );
     await expect(verifier.isValid(vcToken)).rejects.toThrow(
-      'CRL is no longer valid'
+      'CRL is no longer valid',
     );
   });
 
@@ -110,7 +110,7 @@ describe('list', () => {
     const token = await hmac(
       duration.toString(),
       secret,
-      statuslist.hmacFunction
+      statuslist.hmacFunction,
     );
     // create a dummy vc because the valid function requires one
     const vc: CredentialStatusTokenPayload = {
@@ -152,12 +152,12 @@ describe('list', () => {
       const token = await hmac(
         duration.toString(),
         entries[i].secret,
-        statuslist.hmacFunction
+        statuslist.hmacFunction,
       );
 
       const validHash = await hash(
         [token, entries[i].s_id],
-        statuslist.hashFunction
+        statuslist.hashFunction,
       );
 
       expect(statuslist.entries.has(validHash)).toBe(entries[i].valid);

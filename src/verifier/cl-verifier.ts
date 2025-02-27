@@ -20,7 +20,7 @@ export class ClVerifier extends Verifier {
     super(config);
     // create an object for the list, rather than managing the entries here.
     this.entries = new Entries(
-      DynamicList.decompressToArrayBuffers(config.vc.entries)
+      DynamicList.decompressToArrayBuffers(config.vc.entries),
     );
   }
 

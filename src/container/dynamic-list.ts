@@ -13,7 +13,7 @@ export class DynamicList extends Container {
   async addValid(
     s_id: string,
     secret: string,
-    getSecretVC = true
+    getSecretVC = true,
   ): Promise<CredentialStatusSecretVcPayload | undefined> {
     const validHash = await this.calculateValidHash(secret, s_id);
     this.entries.add(validHash);
