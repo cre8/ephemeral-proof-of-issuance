@@ -54,7 +54,7 @@ export abstract class Container {
    */
   public createStatusVcPayload(
     secret: string,
-    s_id: string
+    s_id: string,
   ): CredentialStatusSecretVcPayload {
     return {
       duration: this.duration,
@@ -74,13 +74,13 @@ export abstract class Container {
    */
   protected async calculateValidHash(
     secret: string,
-    s_id: string
+    s_id: string,
   ): Promise<ArrayBuffer> {
     // time based password
     const token = await hmac(
       this.duration.toString(),
       secret,
-      this.hmacFunction
+      this.hmacFunction,
     );
     // Status hash to declare validity
     return hash([token, s_id], this.hashFunction);
@@ -94,7 +94,7 @@ export abstract class Container {
   abstract addValid(
     s_id: string,
     secret: string,
-    getSecretVC: boolean
+    getSecretVC: boolean,
   ): Promise<CredentialStatusSecretVcPayload | undefined>;
 
   /**

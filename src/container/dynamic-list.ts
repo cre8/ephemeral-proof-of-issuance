@@ -13,7 +13,7 @@ export class DynamicList extends Container {
   async addValid(
     s_id: string,
     secret: string,
-    getSecretVC = true
+    getSecretVC = true,
   ): Promise<CredentialStatusSecretVcPayload | undefined> {
     const validHash = await this.calculateValidHash(secret, s_id);
     this.entries.add(validHash);
@@ -69,7 +69,7 @@ export class DynamicList extends Container {
     // Convert lengths to bytes and prepend them to the data
     const lengthsBuffer = new Uint8Array(lengths.buffer);
     const finalArray = new Uint8Array(
-      lengthsBuffer.length + mergedArray.length
+      lengthsBuffer.length + mergedArray.length,
     );
     finalArray.set(lengthsBuffer, 0);
     finalArray.set(mergedArray, lengthsBuffer.length);
