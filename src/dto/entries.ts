@@ -35,7 +35,7 @@ export class Entries {
    */
   has(array: ArrayBuffer) {
     return Array.from(this.entries).some((entry) =>
-      this.arrayBuffersEqual(entry, array),
+      this.arrayBuffersEqual(entry, array)
     );
   }
 
@@ -46,7 +46,6 @@ export class Entries {
 
     const view1 = new Uint8Array(buf1);
     const view2 = new Uint8Array(buf2);
-
     for (let i = 0; i < view1.length; i++) {
       if (view1[i] !== view2[i]) {
         return false; // Found a difference

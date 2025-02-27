@@ -8,6 +8,7 @@ import type { VcStatus } from '../dto/vc-status.js';
 import { createCredentialStatusToken } from '../holder.js';
 import { createSecret, hash, hmac } from '../util.js';
 import { ClVerifier } from '../verifier/cl-verifier.js';
+import { CredentialStatusSecretVcPayload } from '../dto/credential-status-secret-payload.js';
 
 // issuer reference of the vc statuslist
 const issuer = 'http://example.com';
@@ -35,9 +36,14 @@ describe('list', () => {
       issuer,
     };
     const statuslist = new DynamicList(config);
-    const id = randomUUID();
-    const secret = createSecret();
-    const credentialStatusVc = await statuslist.addValid(id, secret);
+    const id = 'a44cdeaf-8bcd-4582-91d9-a05fb91f6d5e'; //randomUUID();
+    const secret =
+      '71a0336c0a9256a88d8bb93ea4b269127e6a44e2e3aa8a86d357384fb976a273'; //createSecret();
+
+    const credentialStatusVc = (await statuslist.addValid(
+      id,
+      secret
+    )) as CredentialStatusSecretVcPayload;
     const dynamicCRLVC = statuslist.createVcPayload();
 
     const verifier = new ClVerifier({
@@ -45,7 +51,7 @@ describe('list', () => {
     });
     const vcToken = await createCredentialStatusToken(
       credentialStatusVc,
-      issuer,
+      issuer
     );
     expect(await verifier.isValid(vcToken)).toBe(true);
 
@@ -63,7 +69,10 @@ describe('list', () => {
     const statuslist = new DynamicList(config);
     const id = randomUUID();
     const secret = createSecret();
-    const credentialStatusVc = await statuslist.addValid(id, secret);
+    const credentialStatusVc = (await statuslist.addValid(
+      id,
+      secret
+    )) as CredentialStatusSecretVcPayload;
     const dynamicBloomFilterVC = statuslist.createVcPayload();
 
     const expired = new Date();
@@ -76,10 +85,10 @@ describe('list', () => {
     // create the token
     const vcToken = await createCredentialStatusToken(
       credentialStatusVc,
-      issuer,
+      issuer
     );
     await expect(verifier.isValid(vcToken)).rejects.toThrow(
-      'CRL is no longer valid',
+      'CRL is no longer valid'
     );
   });
 
@@ -101,7 +110,7 @@ describe('list', () => {
     const token = await hmac(
       duration.toString(),
       secret,
-      statuslist.hmacFunction,
+      statuslist.hmacFunction
     );
     // create a dummy vc because the valid function requires one
     const vc: CredentialStatusTokenPayload = {
@@ -143,12 +152,12 @@ describe('list', () => {
       const token = await hmac(
         duration.toString(),
         entries[i].secret,
-        statuslist.hmacFunction,
+        statuslist.hmacFunction
       );
 
       const validHash = await hash(
         [token, entries[i].s_id],
-        statuslist.hashFunction,
+        statuslist.hashFunction
       );
 
       expect(statuslist.entries.has(validHash)).toBe(entries[i].valid);
