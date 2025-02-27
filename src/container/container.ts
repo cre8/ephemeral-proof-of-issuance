@@ -95,16 +95,8 @@ export abstract class Container {
     s_id: string,
     secret: string,
     getSecretVC: boolean
-  ): Promise<CredentialStatusSecretVcPayload | void>;
+  ): Promise<CredentialStatusSecretVcPayload | undefined>;
 
-  /**
-   * Adds the invalid hash to the list
-   * @param s_id id of the vc
-   * @param secret secret of the vc
-   */
-  //abstract addInvalid(s_id: string, secret: string): Promise<void>;
-
-  //TODO: maybe it should just be a promise to avoid wrong implementations
   /**
    * Creates an unsigned VC that includes the filter.
    */
