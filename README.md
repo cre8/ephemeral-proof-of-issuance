@@ -50,7 +50,9 @@ which utilize **JWTs or CWTs** to store information. The choice of container
 does not affect privacy but impacts **resource efficiency and verification
 methods**.
 
-### CL (Compact List)
+The current implementation is using a **JWT** based CL approach. Because of CL it is bigger in size than binary formats like CWT, but for testing it is easier to be used in JSON based transport protocols.
+
+### CL (Certificate List)
 
 - Values are stored as a **list** for direct matching.
 - Simple implementation but **resource-intensive** as the list grows.
