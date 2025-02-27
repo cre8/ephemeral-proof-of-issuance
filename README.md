@@ -1,4 +1,4 @@
-# Dynamic Token Status List
+# Ephemeral Proof-of-Issuance
 
 Traditional status management solutions, such as status lists or revocation
 lists, rely on static entries that allow relying parties to track the status of
@@ -50,9 +50,9 @@ which utilize **JWTs or CWTs** to store information. The choice of container
 does not affect privacy but impacts **resource efficiency and verification
 methods**.
 
-The current implementation is using a **JWT** based CL approach. Because of CL it is bigger in size than binary formats like CWT, but for testing it is easier to be used in JSON based transport protocols.
+The current implementation is using a **JWT** based list approach. Using JWT instead of CWT or any other binary format that generates smaller payloads, it is easier for testing.
 
-### CL (Certificate List)
+### List
 
 - Values are stored as a **list** for direct matching.
 - Simple implementation but **resource-intensive** as the list grows.

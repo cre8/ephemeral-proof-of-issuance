@@ -1,6 +1,6 @@
-import { DynamicCL } from '../container/dynamic-cl.js';
+import { DynamicList } from '../container/dynamic-list.js';
 import type { CredentialStatusTokenPayload } from '../dto/credential-status-token-payload.js';
-import type { DynamicCLVCPayload } from '../dto/dynamic-cl-vc-payload.js';
+import type { DynamicListVCPayload } from '../dto/dynamic-list-vc-payload.js';
 import { Entries } from '../dto/entries.js';
 import type { VerifierConfig } from '../dto/verifier-config.js';
 import { hash } from '../util.js';
@@ -16,11 +16,11 @@ export class ClVerifier extends Verifier {
    * Iinit the verifier
    * @param config
    */
-  constructor(config: VerifierConfig<DynamicCLVCPayload>) {
+  constructor(config: VerifierConfig<DynamicListVCPayload>) {
     super(config);
     // create an object for the list, rather than managing the entries here.
     this.entries = new Entries(
-      DynamicCL.decompressToArrayBuffers(config.vc.entries),
+      DynamicList.decompressToArrayBuffers(config.vc.entries)
     );
   }
 

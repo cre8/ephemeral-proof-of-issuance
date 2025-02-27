@@ -1,19 +1,19 @@
 import { deflate, inflate } from 'pako';
 import type { CredentialStatusSecretVcPayload } from '../dto/credential-status-secret-payload.js';
-import type { DynamicCLVCPayload } from '../dto/dynamic-cl-vc-payload.js';
+import type { DynamicListVCPayload } from '../dto/dynamic-list-vc-payload.js';
 import { Entries } from '../dto/entries.js';
 import { Container } from './container.js';
 
 /**
- * A dynamic status list based on a CL.
+ * A dynamic list that is holding the valid entries.
  */
-export class DynamicCL extends Container {
+export class DynamicList extends Container {
   entries = new Entries(new Set());
 
   async addValid(
     s_id: string,
     secret: string,
-    getSecretVC = true,
+    getSecretVC = true
   ): Promise<CredentialStatusSecretVcPayload | undefined> {
     const validHash = await this.calculateValidHash(secret, s_id);
     this.entries.add(validHash);
@@ -30,7 +30,7 @@ export class DynamicCL extends Container {
     this.entries.delete(validHash);
   }
 
-  createVcPayload(): DynamicCLVCPayload {
+  createVcPayload(): DynamicListVCPayload {
     // create the vc
     const issuanceDate = new Date();
     const expirationDate = new Date();
@@ -69,7 +69,7 @@ export class DynamicCL extends Container {
     // Convert lengths to bytes and prepend them to the data
     const lengthsBuffer = new Uint8Array(lengths.buffer);
     const finalArray = new Uint8Array(
-      lengthsBuffer.length + mergedArray.length,
+      lengthsBuffer.length + mergedArray.length
     );
     finalArray.set(lengthsBuffer, 0);
     finalArray.set(mergedArray, lengthsBuffer.length);

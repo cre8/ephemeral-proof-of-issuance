@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { DynamicCL } from '../src/container/dynamic-cl.js';
+import { DynamicList } from '../src/container/dynamic-list.js';
 import { ContainerConfig } from '../src/dto/container-config.js';
 import { createSecret } from '../src/util.js';
 import { writeFileSync, existsSync, readFileSync } from 'fs';
@@ -43,7 +43,7 @@ const config: ContainerConfig = {
 
 async function calculate(length: number) {
   const start = new Date().getTime();
-  const statuslist = new DynamicCL(config);
+  const statuslist = new DynamicList(config);
   const entries = getSecrets(length);
 
   for (let i = 0; i < entries.length; i++) {

@@ -1,5 +1,5 @@
 {
-  "name": "dynamic-token-status-list",
+  "name": "ephemeral-proof-of-issuance",
   "version": "0.0.1",
   "description": "An implementation of a dynamic status list to manage verifiable credentials.",
   "main": "dist/main.cjs.js",
@@ -19,7 +19,7 @@
     "test": "vitest",
     "test:browser": "vitest --config vite.browser.config.ts --browser",
     "test:all": "vitest && vitest --config vite.browser.config.ts --browser",
-    "benchmark": "tsx benchmark/cl.ts",
+    "benchmark": "tsx benchmark/list.ts",
     "charts": "tsx benchmark/charts.ts"
   },
   "type": "module",
