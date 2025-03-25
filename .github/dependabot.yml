@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: "npm" # Works for pnpm too
+    directory: "/" # Location of package.json and pnpm-lock.yaml
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+    automerge: true
+    ignore:
+      - dependency-name: "pnpm" # Optional: ignore updates to pnpm itself
